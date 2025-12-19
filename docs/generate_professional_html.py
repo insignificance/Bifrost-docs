@@ -609,27 +609,22 @@ def generate_doc_page(doc):
             // 移除HTML标签
             const plainText = text.replace(/<[^>]+>/g, '');
 
-            // 生成ID，匹配GitHub/Markdown的规则：
-            // 1. 转小写
-            // 2. 移除emoji（📖等）
-            // 3. 移除标点符号（：？、。！等）
-            // 4. 空格替换为-
-            // 5. 保留中文、英文、数字、-
+            // 生成ID，完全匹配GitHub Markdown规则
             const id = plainText
                 .toLowerCase()
-                // 移除emoji (U+1F000 - U+1F9FF)
-                .replace(/[\\u1F000-\\u1F9FF]/g, '')
+                // 移除emoji（使用正确的Unicode范围）
+                .replace(/[\\u{{1F300}}-\\u{{1F9FF}}]/gu, '')
+                .replace(/[\\u{{2600}}-\\u{{26FF}}]/gu, '')
+                .replace(/[\\u{{2700}}-\\u{{27BF}}]/gu, '')
                 // 移除中英文标点符号
                 .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
-                .replace(/[:?.,;!'"()\\[\\]<>{{}}]/g, '')
+                .replace(/[?.,;!'"()\\[\\]<>{{}}]/g, '')
                 // 空格替换为-
                 .replace(/\\s+/g, '-')
                 // 多个-合并为一个
                 .replace(/-+/g, '-')
                 // 去掉首尾的-
                 .replace(/^-|-$/g, '')
-                // 去掉开头的数字和点（如果有）
-                .replace(/^\\d+\\./, '')
                 .trim();
 
             return `<h${{level}} id="${{id}}">${{text}}</h${{level}}>`;
