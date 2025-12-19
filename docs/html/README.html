@@ -456,18 +456,33 @@
         // 自定义渲染器 - 修复中文锚点问题
         const renderer = new marked.Renderer();
 
-        // 覆盖heading渲染，使用中文友好的ID生成
+        // 覆盖heading渲染，使用与GitHub Markdown完全一致的ID生成规则
         renderer.heading = function(text, level, raw) {
-            // 移除markdown链接语法，只保留文本
+            // 移除HTML标签
             const plainText = text.replace(/<[^>]+>/g, '');
 
-            // 生成ID：移除特殊字符，保留中文、英文、数字、-
+            // 生成ID，匹配GitHub/Markdown的规则：
+            // 1. 转小写
+            // 2. 移除emoji（📖等）
+            // 3. 移除标点符号（：？、。！等）
+            // 4. 空格替换为-
+            // 5. 保留中文、英文、数字、-
             const id = plainText
                 .toLowerCase()
-                .replace(/[^\u4e00-\u9fa5a-z0-9\s-]/g, '')
+                // 移除emoji (U+1F000 - U+1F9FF)
+                .replace(/[\u1F000-\u1F9FF]/g, '')
+                // 移除中英文标点符号
+                .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
+                .replace(/[:?.,;!'"()\[\]<>{}]/g, '')
+                // 空格替换为-
                 .replace(/\s+/g, '-')
+                // 多个-合并为一个
                 .replace(/-+/g, '-')
-                .replace(/^-|-$/g, '');
+                // 去掉首尾的-
+                .replace(/^-|-$/g, '')
+                // 去掉开头的数字和点（如果有）
+                .replace(/^\d+\./, '')
+                .trim();
 
             return `<h${level} id="${id}">${text}</h${level}>`;
         };
