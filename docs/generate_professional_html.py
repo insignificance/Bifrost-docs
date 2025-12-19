@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Bifrost文档HTML生成器 - 专业版
-认真制作，确保质量
+Bifrost文档HTML生成器 - 修复版
+修复中文锚点跳转问题
 """
 
 import os
 import re
-import html as html_lib
 
 # 文档配置
 DOCS = [
@@ -90,7 +89,7 @@ def md_to_html(md_file):
     return md_file.replace('.md', '.html')
 
 def process_markdown_links(content):
-    """处理Markdown中的链接，确保正确转换"""
+    """处理Markdown中的链接"""
     # 处理相对链接 [text](./file.md) -> [text](file.html)
     content = re.sub(r'\]\(\./([^)]+\.md)\)', r'](\1)', content)
     # 将 .md 链接转换为 .html
@@ -163,8 +162,8 @@ def generate_doc_page(doc):
     <meta name="description" content="{doc['subtitle']}">
     <title>{doc['title']} - Bifrost文档</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
 
@@ -602,10 +601,32 @@ def generate_doc_page(doc):
             securityLevel: 'loose',
         }});
 
+        // 自定义渲染器 - 修复中文锚点问题
+        const renderer = new marked.Renderer();
+
+        // 覆盖heading渲染，使用中文友好的ID生成
+        renderer.heading = function(text, level, raw) {{
+            // 移除markdown链接语法，只保留文本
+            const plainText = text.replace(/<[^>]+>/g, '');
+
+            // 生成ID：移除特殊字符，保留中文、英文、数字、-
+            const id = plainText
+                .toLowerCase()
+                .replace(/[^\\u4e00-\\u9fa5a-z0-9\\s-]/g, '')
+                .replace(/\\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+
+            return `<h${{level}} id="${{id}}">${{text}}</h${{level}}>`;
+        }};
+
         // 配置marked
         marked.setOptions({{
+            renderer: renderer,
             breaks: true,
             gfm: true,
+            headerIds: true,
+            mangle: false,
             highlight: function(code, lang) {{
                 if (lang && hljs.getLanguage(lang)) {{
                     return hljs.highlight(code, {{ language: lang }}).value;
@@ -644,15 +665,44 @@ def generate_doc_page(doc):
             window.scrollTo({{ top: 0, behavior: 'smooth' }});
         }});
 
-        // 平滑滚动
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {{
-            anchor.addEventListener('click', function(e) {{
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {{
-                    target.scrollIntoView({{ behavior: 'smooth', block: 'start' }});
-                }}
+        // 修复锚点跳转 - 考虑固定头部的高度
+        function scrollToAnchor(target) {{
+            const headerOffset = 80; // 固定头部高度 + 额外间距
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({{
+                top: offsetPosition,
+                behavior: 'smooth'
             }});
+        }}
+
+        // 处理所有锚点链接点击
+        document.addEventListener('click', function(e) {{
+            const target = e.target.closest('a[href^="#"]');
+            if (target) {{
+                e.preventDefault();
+                const id = target.getAttribute('href').substring(1);
+                const element = document.getElementById(id);
+                if (element) {{
+                    scrollToAnchor(element);
+                    // 更新URL但不跳转
+                    history.pushState(null, null, '#' + id);
+                }}
+            }}
+        }});
+
+        // 页面加载时处理URL中的锚点
+        window.addEventListener('DOMContentLoaded', function() {{
+            if (window.location.hash) {{
+                setTimeout(() => {{
+                    const id = window.location.hash.substring(1);
+                    const element = document.getElementById(id);
+                    if (element) {{
+                        scrollToAnchor(element);
+                    }}
+                }}, 100);
+            }}
         }});
     </script>
 </body>
@@ -795,11 +845,6 @@ def generate_index():
             font-size: 3rem;
             margin-bottom: 1rem;
             display: inline-block;
-            animation: bounce 2s infinite;
-        }}
-
-        .doc-card:hover .card-icon {{
-            animation: bounce 0.6s;
         }}
 
         .doc-card h3 {{
@@ -876,11 +921,6 @@ def generate_index():
             to {{ opacity: 1; }}
         }}
 
-        @keyframes bounce {{
-            0%, 100% {{ transform: translateY(0); }}
-            50% {{ transform: translateY(-10px); }}
-        }}
-
         @media (max-width: 768px) {{
             .hero h1 {{
                 font-size: 2.5rem;
@@ -921,7 +961,7 @@ def generate_index():
         <div class="footer">
             <p>
                 用心打造的iOS模块化架构文档<br>
-                <a href="https://github.com/youzan/Bifrost" target="_blank">GitHub仓库</a> ·
+                <a href="https://github.com/insignificance/Bifrost-docs" target="_blank">GitHub仓库</a> ·
                 <a href="README.html">开始阅读</a>
             </p>
         </div>
@@ -933,10 +973,9 @@ def generate_index():
 
 def main():
     """主函数"""
-    output_dir = 'docs_html'
-    os.makedirs(output_dir, exist_ok=True)
+    output_dir = 'html'
 
-    print("🎨 开始生成高质量HTML文档...\n")
+    print("🔧 重新生成HTML文档（修复锚点跳转）...\n")
 
     # 生成文档页面
     for doc in DOCS:
@@ -958,8 +997,9 @@ def main():
     with open(index_file, 'w', encoding='utf-8') as f:
         f.write(index_html)
 
-    print(f"\n✨ 完成！文档已生成到: {output_dir}/")
-    print(f"🌐 运行命令查看: open {output_dir}/index.html")
+    print(f"\n✨ 完成！")
+    print(f"📂 文档位置: {output_dir}/")
+    print(f"🔧 已修复中文锚点跳转问题")
 
 if __name__ == '__main__':
     main()
