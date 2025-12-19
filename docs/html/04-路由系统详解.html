@@ -1,0 +1,1399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Router URL的使用和高级特性">
+    <title>第4章 路由系统详解 - Bifrost文档</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0366d6;
+            --primary-dark: #0256c7;
+            --bg-color: #f6f8fa;
+            --text-color: #24292e;
+            --border-color: #e1e4e8;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background: var(--bg-color);
+        }
+
+        /* 顶部栏 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: #586069;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .sidebar-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .sidebar h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #586069;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-nav {
+            list-style: none;
+        }
+
+        .doc-nav li {
+            margin: 0.3rem 0;
+        }
+
+        .doc-nav a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .doc-nav a:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .doc-nav a.active {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 主内容区 */
+        .main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 3rem;
+        }
+
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Markdown内容样式 */
+        .markdown-body {
+            font-size: 16px;
+        }
+
+        .markdown-body h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .markdown-body h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .markdown-body h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: #586069;
+        }
+
+        .markdown-body p {
+            margin: 1.2rem 0;
+            line-height: 1.8;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin: 1.2rem 0;
+            padding-left: 2rem;
+        }
+
+        .markdown-body li {
+            margin: 0.5rem 0;
+            line-height: 1.7;
+        }
+
+        .markdown-body a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .markdown-body a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-body code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .markdown-body pre {
+            background: #f6f8fa;
+            padding: 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: 0.9rem;
+        }
+
+        .markdown-body table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        .markdown-body th, .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 0.8rem 1rem;
+            text-align: left;
+        }
+
+        .markdown-body th {
+            background: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .markdown-body tr:hover {
+            background: #fafbfc;
+        }
+
+        .markdown-body blockquote {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: #f6f8fa;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+        }
+
+        /* Mermaid图表 */
+        .mermaid {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        /* 页面导航 */
+        .page-navigation {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 45%;
+            padding: 1.5rem;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(3,102,214,0.1);
+        }
+
+        .nav-btn.prev {
+            justify-content: flex-start;
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .nav-text {
+            margin: 0 1rem;
+        }
+
+        .nav-label {
+            font-size: 0.8rem;
+            color: #586069;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .nav-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* 回到顶部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 1rem;
+            }
+            .main {
+                padding: 1.5rem;
+            }
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+            .markdown-body h1 {
+                font-size: 2rem;
+            }
+            .page-navigation {
+                flex-direction: column;
+            }
+            .nav-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span>📚</span>
+                <span>Bifrost 文档</span>
+            </a>
+            <div class="breadcrumb">
+                <a href="index.html">首页</a> / 第4章 路由系统详解
+            </div>
+        </div>
+    </header>
+
+    <nav class="sidebar"><div class="sidebar-content"><h3>📖 文档目录</h3><ul class="doc-nav"><li><a href="README.html">📚 文档导航</a></li><li><a href="01-什么是Bifrost.html">🎯 第1章 什么是Bifrost</a></li><li><a href="02-核心概念.html">💡 第2章 核心概念</a></li><li><a href="03-快速开始.html">🚀 第3章 快速开始</a></li><li><a href="04-路由系统详解.html" class="active">🗺️ 第4章 路由系统详解</a></li><li><a href="05-远程API详解.html">🔌 第5章 远程API详解</a></li><li><a href="06-模块开发指南.html">⚙️ 第6章 模块开发指南</a></li><li><a href="07-最佳实践.html">✨ 第7章 最佳实践</a></li><li><a href="08-Demo项目解析.html">🎓 第8章 Demo项目解析</a></li></ul></div></nav>
+
+    <main class="main">
+        <div class="content-wrapper">
+            <article class="markdown-body" id="content"></article>
+            <nav class="page-navigation">
+                
+            <a href="03-快速开始.html" class="nav-btn prev">
+                <span class="nav-icon">←</span>
+                <div class="nav-text">
+                    <div class="nav-label">上一章</div>
+                    <div class="nav-title">第3章 快速开始</div>
+                </div>
+            </a>
+            
+                
+            <a href="05-远程API详解.html" class="nav-btn next">
+                <div class="nav-text">
+                    <div class="nav-label">下一章</div>
+                    <div class="nav-title">第5章 远程API详解</div>
+                </div>
+                <span class="nav-icon">→</span>
+            </a>
+            
+            </nav>
+        </div>
+    </main>
+
+    <div class="back-to-top" id="backToTop">↑</div>
+
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
+
+        // 配置marked
+        marked.setOptions({
+            breaks: true,
+            gfm: true,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        // Markdown内容
+        const markdown = `# 04 - 路由系统详解
+
+## 📖 目录
+- [Router URL概述](#router-url概述)
+- [URL格式和结构](#url格式和结构)
+- [简单参数传递](#简单参数传递)
+- [复杂参数传递](#复杂参数传递)
+- [Completion回调](#completion回调)
+- [URL管理](#url管理)
+- [实际应用场景](#实际应用场景)
+
+---
+
+## Router URL概述
+
+Router URL是Bifrost提供的第一种模块间通信方式，主要用于页面跳转和参数传递。
+
+### 为什么需要Router URL？
+
+\`\`\`mermaid
+graph LR
+    subgraph "传统方式"
+        A1[模块A] -->|#import ViewController.h| B1[模块B]
+    end
+
+    subgraph "Router URL方式"
+        A2[模块A] -->|handleURL:@"//b/page"| R[Bifrost]
+        R -->|返回ViewController| A2
+    end
+
+    style A1 fill:#ff6b6b
+    style B1 fill:#ff6b6b
+    style A2 fill:#95e1d3
+    style R fill:#4ecdc4
+\`\`\`
+
+**优势：**
+- ✅ 模块间解耦，不需要import其他模块的ViewController
+- ✅ 支持跨平台（H5、Android可以使用相同的URL）
+- ✅ 统一的页面跳转入口，便于管理和监控
+- ✅ 支持动态路由和URL拦截
+
+---
+
+## URL格式和结构
+
+### 标准URL格式
+
+Bifrost使用类似HTTP URL的格式：
+
+\`\`\`
+scheme://host/path?param1=value1&param2=value2
+\`\`\`
+
+**在Bifrost中：**
+- **scheme**: 通常省略或使用\`//\`
+- **host**: 模块名称（如：goods、user、order）
+- **path**: 功能路径（如：detail、list、profile）
+- **query**: 参数（如：id=123&from=home）
+
+### URL示例
+
+\`\`\`mermaid
+graph TD
+    A["完整URL示例"] --> B["//goods/detail?id=123&from=home"]
+
+    B --> C["host: goods<br/>（商品模块）"]
+    B --> D["path: detail<br/>（详情页）"]
+    B --> E["query: id=123&from=home<br/>（参数）"]
+
+    style A fill:#4ecdc4
+    style B fill:#ffd93d
+    style C fill:#95e1d3
+    style D fill:#95e1d3
+    style E fill:#95e1d3
+\`\`\`
+
+### URL命名规范
+
+**推荐格式：**
+\`\`\`objective-c
+// 格式：//模块名/功能名
+static NSString *const kRouteGoodsDetail = @"//goods/detail";
+static NSString *const kRouteGoodsList = @"//goods/list";
+static NSString *const kRouteUserProfile = @"//user/profile";
+static NSString *const kRouteOrderDetail = @"//order/detail";
+\`\`\`
+
+**命名建议：**
+- 使用小写字母
+- 使用\`/\`分隔层级
+- 保持简洁明了
+- 避免使用特殊字符
+
+---
+
+## 简单参数传递
+
+简单参数通过URL的query string传递，适用于字符串、数字等基本类型。
+
+### 参数传递流程
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Caller as 调用方
+    participant Bifrost as Bifrost
+    participant Handler as URL Handler
+    participant VC as ViewController
+
+    Caller->>Bifrost: handleURL:@"//goods/detail?id=123&from=home"
+    Bifrost->>Bifrost: 解析URL
+    Note over Bifrost: 提取参数：<br/>{<br/>  id: "123",<br/>  from: "home"<br/>}
+    Bifrost->>Handler: 调用Handler<br/>传入parameters字典
+    Handler->>VC: 创建ViewController<br/>设置属性
+    VC->>Handler: 返回VC实例
+    Handler->>Bifrost: 返回VC
+    Bifrost->>Caller: 返回VC
+\`\`\`
+
+### 步骤1：定义URL和参数常量
+
+在\`GoodsModuleService.h\`中定义：
+
+\`\`\`objective-c
+#pragma mark - URL routers
+
+// URL常量
+static NSString *const kRouteGoodsDetail = @"//goods/detail";
+
+// 参数key常量
+static NSString *const kRouteGoodsDetailParamId = @"id";
+static NSString *const kRouteGoodsDetailParamFrom = @"from";
+\`\`\`
+
+<thinking>
+我需要继续编写这个文档，包括：
+1. 如何绑定URL handler
+2. 如何在handler中获取参数
+3. 如何调用URL
+4. 复杂参数传递
+5. Completion回调
+6. URL管理（绑定、解绑、验证）
+7. 实际应用场景
+
+让我继续编写文档内容。
+</thinking>
+
+### 步骤2：绑定URL Handler
+
+在\`GoodsModule.m\`的\`+load\`方法中绑定：
+
+\`\`\`objective-c
++ (void)load {
+    [Bifrost bindURL:kRouteGoodsDetail toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+        // 1. 从parameters中获取参数
+        NSString *goodsId = parameters[kRouteGoodsDetailParamId];
+        NSString *from = parameters[kRouteGoodsDetailParamFrom];
+
+        // 2. 参数验证
+        if (!goodsId || goodsId.length == 0) {
+            NSLog(@"❌ 商品ID不能为空");
+            return nil;
+        }
+
+        // 3. 创建ViewController
+        GoodsDetailViewController *vc = [[GoodsDetailViewController alloc] init];
+        vc.goodsId = goodsId;
+        vc.fromPage = from;
+
+        // 4. 返回ViewController
+        return vc;
+    }];
+}
+\`\`\`
+
+### 步骤3：调用URL
+
+在其他模块中调用：
+
+\`\`\`objective-c
+// 方式1：手动拼接URL（不推荐）
+NSString *url = @"//goods/detail?id=123&from=home";
+UIViewController *vc = [Bifrost handleURL:url];
+
+// 方式2：使用常量拼接（推荐）
+NSString *url = [NSString stringWithFormat:@"%@?%@=%@&%@=%@",
+                 kRouteGoodsDetail,
+                 kRouteGoodsDetailParamId, @"123",
+                 kRouteGoodsDetailParamFrom, @"home"];
+UIViewController *vc = [Bifrost handleURL:url];
+
+// 方式3：使用BFStr宏（最推荐）
+NSString *url = BFStr(@"%@?%@=%@&%@=%@",
+                      kRouteGoodsDetail,
+                      kRouteGoodsDetailParamId, @"123",
+                      kRouteGoodsDetailParamFrom, @"home");
+UIViewController *vc = [Bifrost handleURL:url];
+
+// 跳转页面
+if (vc) {
+    [self.navigationController pushViewController:vc animated:YES];
+}
+\`\`\`
+
+### parameters字典内容
+
+Bifrost会自动将URL参数解析为字典，并添加两个特殊key：
+
+\`\`\`objective-c
+// parameters字典包含：
+{
+    @"id": @"123",                    // URL参数
+    @"from": @"home",                 // URL参数
+    kBifrostRouteURL: @"//goods/detail?id=123&from=home",  // 原始URL
+    kBifrostRouteCompletion: completionBlock  // 回调block（如果有）
+}
+\`\`\`
+
+### 参数类型转换
+
+URL参数都是字符串类型，需要手动转换：
+
+\`\`\`objective-c
+[Bifrost bindURL:kRouteGoodsDetail toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+    // 字符串参数
+    NSString *goodsId = parameters[@"id"];
+
+    // 转换为整数
+    NSInteger quantity = [parameters[@"quantity"] integerValue];
+
+    // 转换为浮点数
+    CGFloat price = [parameters[@"price"] floatValue];
+
+    // 转换为BOOL
+    BOOL isVip = [parameters[@"isVip"] boolValue];
+
+    // 创建ViewController
+    GoodsDetailViewController *vc = [[GoodsDetailViewController alloc] init];
+    vc.goodsId = goodsId;
+    vc.quantity = quantity;
+    vc.price = price;
+    vc.isVip = isVip;
+
+    return vc;
+}];
+\`\`\`
+
+---
+
+## 复杂参数传递
+
+对于无法通过URL传递的复杂对象（如UIImage、自定义对象等），使用\`complexParams\`参数。
+
+### 使用场景
+
+\`\`\`mermaid
+graph TD
+    A[需要传递的参数] --> B{参数类型}
+    B -->|字符串/数字| C[使用URL参数]
+    B -->|图片/对象| D[使用complexParams]
+
+    C --> E["//goods/detail?id=123"]
+    D --> F["complexParams:<br/>{image: UIImage}"]
+
+    style C fill:#95e1d3
+    style D fill:#ffd93d
+\`\`\`
+
+### 方法签名
+
+\`\`\`objective-c
++ (nullable id)handleURL:(nonnull NSString *)urlStr
+           complexParams:(nullable NSDictionary*)complexParams
+              completion:(nullable BifrostRouteCompletion)completion;
+\`\`\`
+
+### 示例：传递图片对象
+
+**场景：** 从相册选择图片后，跳转到图片编辑页面
+
+#### 1. 定义URL
+
+\`\`\`objective-c
+// ImageModuleService.h
+static NSString *const kRouteImageEditor = @"//image/editor";
+static NSString *const kRouteImageEditorParamImage = @"image";
+static NSString *const kRouteImageEditorParamTitle = @"title";
+\`\`\`
+
+#### 2. 绑定URL Handler
+
+\`\`\`objective-c
+// ImageModule.m
++ (void)load {
+    [Bifrost bindURL:kRouteImageEditor toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+        // 从complexParams中获取图片对象
+        UIImage *image = parameters[kRouteImageEditorParamImage];
+
+        // 从URL参数中获取标题
+        NSString *title = parameters[kRouteImageEditorParamTitle];
+
+        // 参数验证
+        if (!image) {
+            NSLog(@"❌ 图片不能为空");
+            return nil;
+        }
+
+        // 创建图片编辑器
+        ImageEditorViewController *vc = [[ImageEditorViewController alloc] init];
+        vc.image = image;
+        vc.title = title ?: @"编辑图片";
+
+        return vc;
+    }];
+}
+\`\`\`
+
+#### 3. 调用URL并传递复杂参数
+
+\`\`\`objective-c
+// 在相册选择器的回调中
+- (void)imagePickerController:(UIImagePickerController *)picker
+didFinishPickingMediaWithInfo:(NSDictionary<UIImagePickerControllerInfoKey,id> *)info {
+
+    // 获取选中的图片
+    UIImage *image = info[UIImagePickerControllerOriginalImage];
+
+    // 构建URL（简单参数）
+    NSString *url = BFStr(@"%@?%@=%@",
+                          kRouteImageEditor,
+                          kRouteImageEditorParamTitle,
+                          @"我的照片");
+
+    // 构建complexParams（复杂参数）
+    NSDictionary *complexParams = @{
+        kRouteImageEditorParamImage: image
+    };
+
+    // 调用Bifrost
+    UIViewController *vc = [Bifrost handleURL:url
+                                complexParams:complexParams
+                                   completion:nil];
+
+    // 跳转页面
+    if (vc) {
+        [picker pushViewController:vc animated:YES];
+    }
+}
+\`\`\`
+
+### 复杂参数传递流程
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Caller as 调用方
+    participant Bifrost as Bifrost
+    participant Handler as URL Handler
+
+    Caller->>Bifrost: handleURL:@"//image/editor?title=我的照片"<br/>complexParams:{image: UIImage}
+    Bifrost->>Bifrost: 解析URL参数<br/>{title: "我的照片"}
+    Bifrost->>Bifrost: 合并参数<br/>{title: "我的照片", image: UIImage}
+    Bifrost->>Handler: 调用Handler<br/>传入合并后的parameters
+    Handler->>Handler: 获取image和title<br/>创建ViewController
+    Handler->>Bifrost: 返回VC
+    Bifrost->>Caller: 返回VC
+\`\`\`
+
+### 注意事项
+
+1. **参数合并**：URL参数和complexParams会合并到同一个字典中
+2. **参数优先级**：如果有同名参数，complexParams会覆盖URL参数
+3. **类型安全**：从parameters中取出复杂对象时，注意类型转换
+
+\`\`\`objective-c
+// 安全的类型转换
+UIImage *image = parameters[kRouteImageEditorParamImage];
+if ([image isKindOfClass:[UIImage class]]) {
+    // 使用image
+} else {
+    NSLog(@"❌ 参数类型错误");
+}
+\`\`\`
+
+---
+
+## Completion回调
+
+Completion回调用于在页面关闭或操作完成后，将结果返回给调用方。
+
+### 使用场景
+
+\`\`\`mermaid
+graph LR
+    A[列表页] -->|选择商品| B[商品选择器]
+    B -->|选择完成| C[通过Completion返回]
+    C -->|接收选中的商品| A
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#4ecdc4
+\`\`\`
+
+### Completion类型定义
+
+\`\`\`objective-c
+// 在Bifrost+Router.h中定义
+typedef void (^BifrostRouteCompletion)(_Nullable id result);
+\`\`\`
+
+### 示例：商品选择器
+
+**场景：** 从商品列表中选择商品，返回给调用方
+
+#### 1. 定义URL
+
+\`\`\`objective-c
+// GoodsModuleService.h
+static NSString *const kRouteGoodsPicker = @"//goods/picker";
+static NSString *const kRouteGoodsPickerParamMaxCount = @"maxCount";
+\`\`\`
+
+#### 2. 绑定URL Handler
+
+\`\`\`objective-c
+// GoodsModule.m
++ (void)load {
+    [Bifrost bindURL:kRouteGoodsPicker toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+        // 获取最大选择数量
+        NSInteger maxCount = [parameters[kRouteGoodsPickerParamMaxCount] integerValue];
+
+        // 获取completion回调
+        BifrostRouteCompletion completion = parameters[kBifrostRouteCompletion];
+
+        // 创建商品选择器
+        GoodsPickerViewController *vc = [[GoodsPickerViewController alloc] init];
+        vc.maxCount = maxCount > 0 ? maxCount : 1;
+        vc.completion = completion;  // 传递completion给VC
+
+        return vc;
+    }];
+}
+\`\`\`
+
+#### 3. 在ViewController中使用Completion
+
+\`\`\`objective-c
+// GoodsPickerViewController.m
+
+@interface GoodsPickerViewController ()
+@property (nonatomic, copy) BifrostRouteCompletion completion;
+@property (nonatomic, strong) NSMutableArray *selectedGoods;
+@end
+
+@implementation GoodsPickerViewController
+
+- (void)confirmButtonClicked {
+    // 用户点击确认按钮
+
+    if (self.completion) {
+        // 调用completion，返回选中的商品
+        self.completion(self.selectedGoods);
+    }
+
+    // 关闭页面
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+- (void)cancelButtonClicked {
+    // 用户点击取消按钮
+
+    if (self.completion) {
+        // 返回nil表示取消
+        self.completion(nil);
+    }
+
+    [self.navigationController popViewControllerAnimated:YES];
+}
+
+@end
+\`\`\`
+
+#### 4. 调用方接收结果
+
+\`\`\`objective-c
+// 在ShoppingCartViewController.m中
+
+- (void)selectGoods {
+    // 构建URL
+    NSString *url = BFStr(@"%@?%@=%@",
+                          kRouteGoodsPicker,
+                          kRouteGoodsPickerParamMaxCount,
+                          @"5");
+
+    // 定义completion回调
+    BifrostRouteCompletion completion = ^(id result) {
+        if (result) {
+            // 用户选择了商品
+            NSArray *selectedGoods = (NSArray*)result;
+            NSLog(@"✅ 选中了%ld个商品", selectedGoods.count);
+
+            // 处理选中的商品
+            [self addGoodsToCart:selectedGoods];
+        } else {
+            // 用户取消了选择
+            NSLog(@"❌ 用户取消选择");
+        }
+    };
+
+    // 调用Bifrost
+    UIViewController *vc = [Bifrost handleURL:url
+                                   completion:completion];
+
+    // 跳转页面
+    if (vc) {
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+\`\`\`
+
+### Completion流程图
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Cart as 购物车页面
+    participant Bifrost as Bifrost
+    participant Picker as 商品选择器
+
+    Cart->>Bifrost: handleURL:@"//goods/picker"<br/>completion:^(id result){}
+    Bifrost->>Picker: 创建ViewController<br/>传入completion
+    Cart->>Picker: push ViewController
+
+    Note over Picker: 用户选择商品
+
+    Picker->>Picker: 点击确认按钮
+    Picker->>Cart: 调用completion(selectedGoods)
+    Picker->>Picker: pop ViewController
+
+    Note over Cart: 接收到选中的商品<br/>更新购物车
+\`\`\`
+
+### 使用BFComplete宏
+
+Bifrost提供了\`BFComplete\`宏来简化completion调用：
+
+\`\`\`objective-c
+// 在GoodsPickerViewController.m中
+
+- (void)confirmButtonClicked {
+    // 使用BFComplete宏
+    BFComplete(self.parameters, self.selectedGoods);
+
+    // 等价于：
+    // BifrostRouteCompletion completion = self.parameters[kBifrostRouteCompletion];
+    // if (completion) {
+    //     completion(self.selectedGoods);
+    // }
+
+    [self.navigationController popViewControllerAnimated:YES];
+}
+\`\`\`
+
+**注意：** 使用\`BFComplete\`需要保存\`parameters\`字典：
+
+\`\`\`objective-c
+@interface GoodsPickerViewController ()
+@property (nonatomic, strong) NSDictionary *parameters;  // 保存parameters
+@end
+
+// 在Handler中传递parameters
+[Bifrost bindURL:kRouteGoodsPicker toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+    GoodsPickerViewController *vc = [[GoodsPickerViewController alloc] init];
+    vc.parameters = parameters;  // 保存parameters
+    return vc;
+}];
+\`\`\`
+
+---
+
+## URL管理
+
+Bifrost提供了一系列方法来管理URL。
+
+### URL绑定
+
+\`\`\`objective-c
+// 绑定URL
++ (void)bindURL:(nonnull NSString *)urlStr
+      toHandler:(nonnull BifrostRouteHandler)handler;
+\`\`\`
+
+**示例：**
+\`\`\`objective-c
+[Bifrost bindURL:@"//goods/detail" toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+    // 创建并返回ViewController
+    return [[GoodsDetailViewController alloc] init];
+}];
+\`\`\`
+
+### URL解绑
+
+\`\`\`objective-c
+// 解绑单个URL
++ (void)unbindURL:(nonnull NSString *)urlStr;
+
+// 解绑所有URL
++ (void)unbindAllURLs;
+\`\`\`
+
+**示例：**
+\`\`\`objective-c
+// 解绑商品详情URL
+[Bifrost unbindURL:@"//goods/detail"];
+
+// 解绑所有URL（通常在测试中使用）
+[Bifrost unbindAllURLs];
+\`\`\`
+
+### URL验证
+
+\`\`\`objective-c
+// 检查URL是否可以处理
++ (BOOL)canHandleURL:(nonnull NSString *)urlStr;
+\`\`\`
+
+**示例：**
+\`\`\`objective-c
+NSString *url = @"//goods/detail?id=123";
+
+if ([Bifrost canHandleURL:url]) {
+    NSLog(@"✅ URL可以处理");
+    UIViewController *vc = [Bifrost handleURL:url];
+    [self.navigationController pushViewController:vc animated:YES];
+} else {
+    NSLog(@"❌ URL无法处理");
+    // 显示错误提示
+}
+\`\`\`
+
+### URL管理流程
+
+\`\`\`mermaid
+graph TD
+    A[App启动] --> B[+load方法执行]
+    B --> C[bindURL注册路由]
+
+    D[运行时] --> E{canHandleURL?}
+    E -->|YES| F[handleURL处理]
+    E -->|NO| G[显示错误]
+
+    H[特殊情况] --> I[unbindURL解绑]
+    I --> J[重新bindURL]
+
+    style C fill:#95e1d3
+    style F fill:#4ecdc4
+    style G fill:#ff6b6b
+\`\`\`
+
+---
+
+## 实际应用场景
+
+### 场景1：H5调用Native页面
+
+**需求：** H5页面需要跳转到Native的商品详情页
+
+\`\`\`mermaid
+sequenceDiagram
+    participant H5 as H5页面
+    participant Bridge as JSBridge
+    participant Bifrost as Bifrost
+    participant Native as Native页面
+
+    H5->>Bridge: 调用JSBridge<br/>openURL("//goods/detail?id=123")
+    Bridge->>Bifrost: handleURL:@"//goods/detail?id=123"
+    Bifrost->>Native: 创建GoodsDetailViewController
+    Native->>H5: 显示Native页面
+\`\`\`
+
+**实现：**
+\`\`\`objective-c
+// 在JSBridge中
+- (void)openURL:(NSString*)urlString {
+    UIViewController *vc = [Bifrost handleURL:urlString];
+    if (vc) {
+        [[self currentViewController].navigationController pushViewController:vc animated:YES];
+    } else {
+        NSLog(@"❌ 无法打开URL: %@", urlString);
+    }
+}
+\`\`\`
+
+### 场景2：推送通知跳转
+
+**需求：** 用户点击推送通知，跳转到指定页面
+
+\`\`\`objective-c
+// 在AppDelegate中处理推送
+- (void)application:(UIApplication *)application
+didReceiveRemoteNotification:(NSDictionary *)userInfo {
+
+    // 从推送数据中获取URL
+    NSString *url = userInfo[@"url"];  // 如：//order/detail?id=12345
+
+    if (url && [Bifrost canHandleURL:url]) {
+        // 延迟跳转，确保App已完全启动
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            UIViewController *vc = [Bifrost handleURL:url];
+            if (vc) {
+                UINavigationController *nav = (UINavigationController*)self.window.rootViewController;
+                [nav pushViewController:vc animated:YES];
+            }
+        });
+    }
+}
+\`\`\`
+
+### 场景3：统一跳转入口
+
+**需求：** 统一管理所有页面跳转，便于添加埋点、权限检查等
+
+\`\`\`objective-c
+// 创建统一的路由管理器
+@interface RouterManager : NSObject
+
++ (void)openURL:(NSString*)url fromViewController:(UIViewController*)fromVC;
+
+@end
+
+@implementation RouterManager
+
++ (void)openURL:(NSString*)url fromViewController:(UIViewController*)fromVC {
+    // 1. 埋点统计
+    [self trackPageOpen:url];
+
+    // 2. 权限检查
+    if (![self checkPermission:url]) {
+        [self showPermissionAlert:fromVC];
+        return;
+    }
+
+    // 3. 登录检查
+    if ([self needLogin:url] && ![self isUserLoggedIn]) {
+        [self showLoginPage:fromVC completion:^(BOOL success) {
+            if (success) {
+                [self openURL:url fromViewController:fromVC];
+            }
+        }];
+        return;
+    }
+
+    // 4. 处理URL
+    UIViewController *vc = [Bifrost handleURL:url];
+    if (vc) {
+        [fromVC.navigationController pushViewController:vc animated:YES];
+    } else {
+        NSLog(@"❌ 无法打开URL: %@", url);
+    }
+}
+
++ (void)trackPageOpen:(NSString*)url {
+    // 埋点统计
+    NSLog(@"📊 页面打开: %@", url);
+}
+
++ (BOOL)checkPermission:(NSString*)url {
+    // 权限检查逻辑
+    return YES;
+}
+
++ (BOOL)needLogin:(NSString*)url {
+    // 判断URL是否需要登录
+    NSArray *loginRequiredURLs = @[@"//order/", @"//user/profile"];
+    for (NSString *prefix in loginRequiredURLs) {
+        if ([url hasPrefix:prefix]) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
++ (BOOL)isUserLoggedIn {
+    // 检查用户是否登录
+    return [BFModule(UserModuleService) isUserLoggedIn];
+}
+
+@end
+\`\`\`
+
+### 场景4：URL拦截和重定向
+
+**需求：** 某些URL需要重定向到其他页面
+
+\`\`\`objective-c
+// 创建URL拦截器
+@interface URLInterceptor : NSObject
+
++ (NSString*)interceptURL:(NSString*)url;
+
+@end
+
+@implementation URLInterceptor
+
++ (NSString*)interceptURL:(NSString*)url {
+    // 示例1：旧版URL重定向到新版URL
+    if ([url hasPrefix:@"//goods/old_detail"]) {
+        url = [url stringByReplacingOccurrencesOfString:@"//goods/old_detail"
+                                             withString:@"//goods/detail"];
+        NSLog(@"🔄 URL重定向: %@", url);
+    }
+
+    // 示例2：根据用户类型重定向
+    if ([url isEqualToString:@"//home/main"]) {
+        BOOL isVip = [BFModule(UserModuleService) currentUser].isVip;
+        if (isVip) {
+            url = @"//home/vip";
+            NSLog(@"🔄 VIP用户重定向: %@", url);
+        }
+    }
+
+    return url;
+}
+
+@end
+
+// 在RouterManager中使用拦截器
++ (void)openURL:(NSString*)url fromViewController:(UIViewController*)fromVC {
+    // 先拦截URL
+    url = [URLInterceptor interceptURL:url];
+
+    // 再处理URL
+    UIViewController *vc = [Bifrost handleURL:url];
+    // ...
+}
+\`\`\`
+
+---
+
+## 小结
+
+本章我们深入学习了Bifrost的Router URL系统：
+
+1. **URL格式**
+   - 使用\`//host/path?param=value\`格式
+   - 定义URL和参数常量
+
+2. **简单参数传递**
+   - 通过query string传递字符串、数字等基本类型
+   - 在Handler中从parameters字典获取参数
+
+3. **复杂参数传递**
+   - 使用complexParams传递图片、对象等复杂类型
+   - URL参数和complexParams会合并到同一个字典
+
+4. **Completion回调**
+   - 用于页面关闭后返回结果
+   - 使用BFComplete宏简化调用
+
+5. **URL管理**
+   - bindURL绑定路由
+   - unbindURL解绑路由
+   - canHandleURL验证路由
+
+6. **实际应用**
+   - H5调用Native
+   - 推送通知跳转
+   - 统一跳转入口
+   - URL拦截和重定向
+
+---
+
+## 下一步
+
+现在你已经掌握了Router URL系统的所有功能。
+
+在下一章节中，我们将学习Remote API系统：
+- 定义Service协议
+- 实现Service方法
+- 调用Remote API
+- 异常处理
+
+👉 [下一章：远程API详解](05-远程API详解.html)
+`;
+
+        // 渲染
+        const contentEl = document.getElementById('content');
+        contentEl.innerHTML = marked.parse(markdown);
+
+        // 处理Mermaid图表
+        const mermaidBlocks = contentEl.querySelectorAll('pre code.language-mermaid');
+        mermaidBlocks.forEach((block, index) => {
+            const pre = block.parentElement;
+            const code = block.textContent;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code;
+            pre.replaceWith(div);
+        });
+
+        // 渲染Mermaid
+        mermaid.run();
+
+        // 回到顶部
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('show', window.pageYOffset > 300);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

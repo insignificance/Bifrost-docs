@@ -1,0 +1,957 @@
+# 05 - 远程API详解
+
+本章详细介绍Bifrost的Remote API系统，包括Service协议设计、Model协议定义、API实现和调用等内容。
+
+## 📖 目录
+- [Remote API概述](#remote-api概述)
+- [Service协议设计](#service协议设计)
+- [Model协议定义](#model协议定义)
+- [实现Service方法](#实现service方法)
+- [调用Remote API](#调用remote-api)
+- [异常处理和容错](#异常处理和容错)
+- [性能优化](#性能优化)
+- [实际应用场景](#实际应用场景)
+
+---
+
+## Remote API概述
+
+Remote API是Bifrost提供的第二种模块间通信方式，主要用于复杂数据交互和方法调用。
+
+### 为什么需要Remote API？
+
+```mermaid
+graph TD
+    A[模块间通信需求] --> B{通信类型}
+    B -->|页面跳转| C[Router URL]
+    B -->|数据交互| D[Remote API]
+
+    D --> D1[获取数据]
+    D --> D2[调用方法]
+    D --> D3[传递复杂对象]
+
+    style B fill:#ffd93d
+    style C fill:#95e1d3
+    style D fill:#4ecdc4
+```
+
+**Remote API的优势：**
+- ✅ 类型安全：通过协议定义明确的参数和返回值类型
+- ✅ 复杂交互：支持传递复杂对象（图片、数组、自定义类等）
+- ✅ 方法调用：更符合OOP思想，代码更直观
+- ✅ IDE支持：代码补全和类型检查
+
+### Remote API vs Router URL
+
+| 特性 | Remote API | Router URL |
+|------|-----------|-----------|
+| **适用场景** | 数据交互、方法调用 | 页面跳转 |
+| **类型安全** | ✅ 强类型 | ⚠️ 字符串类型 |
+| **参数复杂度** | ✅ 支持复杂对象 | ⚠️ 只支持简单类型 |
+| **IDE支持** | ✅ 代码补全 | ❌ 无补全 |
+| **跨平台** | ❌ 只支持Native | ✅ 支持H5、Android |
+| **性能** | ✅ 直接调用 | ⚠️ 需要解析URL |
+
+### Remote API工作原理
+
+```mermaid
+sequenceDiagram
+    participant Caller as 调用方模块
+    participant Bifrost as Bifrost
+    participant Registry as 注册表
+    participant Module as 目标模块
+
+    Note over Caller,Module: 注册阶段（App启动时）
+    Module->>Registry: BFRegister(GoodsModuleService)
+    Note over Registry: 存储：GoodsModuleService -> GoodsModule
+
+    Note over Caller,Module: 调用阶段（运行时）
+    Caller->>Bifrost: BFModule(GoodsModuleService)
+    Bifrost->>Registry: 查找GoodsModuleService
+    Registry->>Bifrost: 返回GoodsModule类
+    Bifrost->>Module: [GoodsModule sharedInstance]
+    Module->>Bifrost: 返回单例实例
+    Bifrost->>Caller: 返回实例（id<GoodsModuleService>）
+
+    Caller->>Module: [module goodsById:@"123"]
+    Module->>Caller: 返回id<GoodsProtocol>对象
+```
+
+---
+
+## Service协议设计
+
+Service协议定义了模块对外提供的服务接口，是模块间通信的契约。
+
+### Service协议的组成部分
+
+一个完整的`*ModuleService.h`文件通常包含：
+
+```objective-c
+//
+//  GoodsModuleService.h
+//  Mediator
+//
+
+#ifndef GoodsModuleService_h
+#define GoodsModuleService_h
+
+#import <BifrostHeader.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+///<v1.0>  // 语义化版本号
+
+#pragma mark - Notifications
+// 通知名称定义
+static NSString *const kGoodsListDidUpdateNotification = @"GoodsListDidUpdateNotification";
+static NSString *const kGoodsPriceDidChangeNotification = @"GoodsPriceDidChangeNotification";
+
+#pragma mark - URL routers
+// Router URL常量（在第4章已详细介绍）
+static NSString *const kRouteGoodsDetail = @"//goods/detail";
+static NSString *const kRouteGoodsDetailParamId = @"id";
+
+#pragma mark - Model Protocols
+// 数据模型协议
+@protocol GoodsProtocol <NSObject>
+@required
+- (NSString*)goodsId;
+- (NSString*)name;
+- (CGFloat)price;
+- (NSString*)imageURL;
+
+@optional
+- (NSString*)goodsDescription;
+- (NSArray*)tags;
+@end
+
+#pragma mark - Module Protocol
+// 模块服务协议
+@protocol GoodsModuleService <NSObject>
+
+@required
+/// 获取所有商品列表
+- (NSArray<id<GoodsProtocol>>*)allGoodsList;
+
+/// 根据ID获取商品
+/// @param goodsId 商品ID
+/// @return 商品对象，如果不存在返回nil
+- (nullable id<GoodsProtocol>)goodsById:(NSString*)goodsId;
+
+@optional
+/// 搜索商品
+/// @param keyword 搜索关键词
+/// @return 匹配的商品列表
+- (NSArray<id<GoodsProtocol>>*)searchGoods:(NSString*)keyword;
+
+/// 添加商品到收藏
+/// @param goodsId 商品ID
+/// @return 是否添加成功
+- (BOOL)addToFavorite:(NSString*)goodsId;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+#endif /* GoodsModuleService_h */
+```
+
+### Service协议设计原则
+
+#### 1. 最小化原则
+
+只暴露必要的方法，隐藏内部实现细节。
+
+```objective-c
+// ✅ 好的设计：只暴露必要的方法
+@protocol UserModuleService <NSObject>
+- (id<UserProtocol>)currentUser;
+- (BOOL)isUserLoggedIn;
+@end
+
+// ❌ 不好的设计：暴露过多内部方法
+@protocol UserModuleService <NSObject>
+- (id<UserProtocol>)currentUser;
+- (BOOL)isUserLoggedIn;
+- (void)loadUserFromDatabase;        // 内部实现细节，不应暴露
+- (void)saveUserToCache;             // 内部实现细节，不应暴露
+- (NSString*)userDatabasePath;       // 内部实现细节，不应暴露
+@end
+```
+
+#### 2. 职责单一原则
+
+每个Service协议只负责一个模块的服务。
+
+```objective-c
+// ✅ 好的设计：职责单一
+@protocol OrderModuleService <NSObject>
+- (NSArray<id<OrderProtocol>>*)userOrders;
+- (id<OrderProtocol>)orderById:(NSString*)orderId;
+- (BOOL)createOrder:(NSDictionary*)orderInfo;
+@end
+
+// ❌ 不好的设计：职责混乱
+@protocol OrderModuleService <NSObject>
+- (NSArray<id<OrderProtocol>>*)userOrders;
+- (id<UserProtocol>)currentUser;     // 应该由UserModule提供
+- (NSArray<id<GoodsProtocol>>*)orderGoods;  // 应该由GoodsModule提供
+@end
+```
+
+#### 3. 向后兼容原则
+
+使用`@optional`标记可选方法，确保向后兼容。
+
+```objective-c
+@protocol GoodsModuleService <NSObject>
+
+@required
+// v1.0: 必须实现的基础方法
+- (NSArray<id<GoodsProtocol>>*)allGoodsList;
+- (id<GoodsProtocol>)goodsById:(NSString*)goodsId;
+
+@optional
+// v1.1: 新增的可选方法（不影响旧版本）
+- (NSArray<id<GoodsProtocol>>*)recommendGoods;
+- (NSArray<id<GoodsProtocol>>*)searchGoods:(NSString*)keyword;
+
+@end
+```
+
+---
+
+## Model协议定义
+
+Model协议定义了跨模块传递的数据对象的接口。
+
+### Model协议的作用
+
+```mermaid
+graph LR
+    A[购物车模块] -->|需要商品数据| B[调用GoodsModule]
+    B -->|返回| C[id<GoodsProtocol>]
+    C -->|只能访问协议方法| D[goodsId, name, price]
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#4ecdc4
+    style D fill:#6bcf7f
+```
+
+**关键点：**
+- 调用方只能访问协议定义的属性和方法
+- 无法访问具体实现类的私有属性
+- 实现了完全解耦
+
+### Model协议设计示例
+
+```objective-c
+#pragma mark - Model Protocols
+
+/// 商品数据协议
+@protocol GoodsProtocol <NSObject>
+
+@required
+/// 商品ID
+- (NSString*)goodsId;
+
+/// 商品名称
+- (NSString*)name;
+
+/// 商品价格
+- (CGFloat)price;
+
+/// 商品图片URL
+- (NSString*)imageURL;
+
+@optional
+/// 商品描述
+- (NSString*)goodsDescription;
+
+/// 商品标签
+- (NSArray<NSString*>*)tags;
+
+/// 是否为VIP商品
+- (BOOL)isVipGoods;
+
+/// 库存数量
+- (NSInteger)stockCount;
+
+@end
+
+/// 用户数据协议
+@protocol UserProtocol <NSObject>
+
+@required
+- (NSString*)userId;
+- (NSString*)userName;
+- (NSString*)avatar;
+
+@optional
+- (NSString*)email;
+- (NSString*)phone;
+- (BOOL)isVip;
+- (NSDate*)vipExpireDate;
+
+@end
+
+/// 订单数据协议
+@protocol OrderProtocol <NSObject>
+
+@required
+- (NSString*)orderId;
+- (NSArray<id<GoodsProtocol>>*)goods;
+- (CGFloat)totalPrice;
+- (NSDate*)createTime;
+
+@optional
+- (NSString*)status;
+- (NSString*)shippingAddress;
+
+@end
+```
+
+### 实现Model协议
+
+在业务模块内部实现Model协议：
+
+```objective-c
+//
+//  GoodsModel.h
+//  Goods
+//
+
+#import <Foundation/Foundation.h>
+#import "GoodsModuleService.h"  // 导入协议
+
+/// 商品数据模型（实现GoodsProtocol）
+@interface GoodsModel : NSObject <GoodsProtocol>
+
+// 实现协议要求的属性
+@property (nonatomic, copy) NSString *goodsId;
+@property (nonatomic, copy) NSString *name;
+@property (nonatomic, assign) CGFloat price;
+@property (nonatomic, copy) NSString *imageURL;
+
+// 可选属性
+@property (nonatomic, copy) NSString *goodsDescription;
+@property (nonatomic, strong) NSArray<NSString*> *tags;
+@property (nonatomic, assign) BOOL isVipGoods;
+@property (nonatomic, assign) NSInteger stockCount;
+
+// 模块内部的私有属性（外部无法访问）
+@property (nonatomic, strong) NSDate *createTime;
+@property (nonatomic, assign) NSInteger viewCount;
+
+@end
+```
+
+```objective-c
+//
+//  GoodsModel.m
+//  Goods
+//
+
+#import "GoodsModel.h"
+
+@implementation GoodsModel
+
+// 协议方法已通过@property自动实现
+
+// 可以添加自定义方法（只在模块内部使用）
+- (NSString*)formattedPrice {
+    return [NSString stringWithFormat:@"¥%.2f", self.price];
+}
+
+@end
+```
+
+### Model协议的类型转换
+
+调用方获取的是协议类型，可以安全地进行类型转换：
+
+```objective-c
+// 在购物车模块中
+id<GoodsProtocol> goods = [BFModule(GoodsModuleService) goodsById:@"123"];
+
+// 访问协议定义的属性
+NSLog(@"商品名称：%@", goods.name);
+NSLog(@"商品价格：%.2f", goods.price);
+
+// 检查可选方法是否实现
+if ([goods respondsToSelector:@selector(goodsDescription)]) {
+    NSLog(@"商品描述：%@", goods.goodsDescription);
+}
+
+// 无法访问具体类的私有属性（编译错误）
+// NSLog(@"%@", goods.createTime);  // ❌ 编译错误：协议中没有定义
+```
+
+---
+
+## 实现Service方法
+
+在业务模块中实现Service协议的方法。
+
+### 基本实现模式
+
+```objective-c
+//
+//  GoodsModule.m
+//  Goods
+//
+
+#import "GoodsModule.h"
+#import "GoodsModel.h"
+#import "GoodsManager.h"
+
+@interface GoodsModule ()
+@property (nonatomic, strong) NSMutableArray<GoodsModel*> *goodsCache;
+@property (nonatomic, strong) GoodsManager *manager;
+@end
+
+@implementation GoodsModule
+
+#pragma mark - 模块注册
+
++ (void)load {
+    BFRegister(GoodsModuleService);
+}
+
+#pragma mark - BifrostModuleProtocol
+
++ (instancetype)sharedInstance {
+    static GoodsModule *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (void)setup {
+    NSLog(@"[GoodsModule] 初始化");
+
+    self.goodsCache = [NSMutableArray array];
+    self.manager = [[GoodsManager alloc] init];
+
+    // 加载初始数据
+    [self loadInitialData];
+}
+
+#pragma mark - GoodsModuleService
+
+/// 获取所有商品列表
+- (NSArray<id<GoodsProtocol>>*)allGoodsList {
+    // 返回缓存数据的副本
+    return [self.goodsCache copy];
+}
+
+/// 根据ID获取商品
+- (id<GoodsProtocol>)goodsById:(NSString *)goodsId {
+    // 参数验证
+    if (!goodsId || goodsId.length == 0) {
+        NSLog(@"[GoodsModule] ❌ goodsId不能为空");
+        return nil;
+    }
+
+    // 查找商品
+    for (GoodsModel *goods in self.goodsCache) {
+        if ([goods.goodsId isEqualToString:goodsId]) {
+            return goods;
+        }
+    }
+
+    NSLog(@"[GoodsModule] ⚠️ 商品不存在：%@", goodsId);
+    return nil;
+}
+
+/// 搜索商品（可选方法）
+- (NSArray<id<GoodsProtocol>>*)searchGoods:(NSString *)keyword {
+    if (!keyword || keyword.length == 0) {
+        return @[];
+    }
+
+    NSMutableArray *results = [NSMutableArray array];
+    for (GoodsModel *goods in self.goodsCache) {
+        if ([goods.name containsString:keyword]) {
+            [results addObject:goods];
+        }
+    }
+
+    return results;
+}
+
+/// 添加商品到收藏（可选方法）
+- (BOOL)addToFavorite:(NSString *)goodsId {
+    id<GoodsProtocol> goods = [self goodsById:goodsId];
+    if (!goods) {
+        return NO;
+    }
+
+    // 调用Manager处理业务逻辑
+    return [self.manager addGoodsToFavorite:goodsId];
+}
+
+#pragma mark - Private Methods
+
+- (void)loadInitialData {
+    // 模拟加载数据
+    GoodsModel *goods1 = [[GoodsModel alloc] init];
+    goods1.goodsId = @"1001";
+    goods1.name = @"iPhone 15 Pro";
+    goods1.price = 7999.00;
+    goods1.imageURL = @"https://example.com/iphone.jpg";
+    goods1.stockCount = 100;
+    [self.goodsCache addObject:goods1];
+
+    GoodsModel *goods2 = [[GoodsModel alloc] init];
+    goods2.goodsId = @"1002";
+    goods2.name = @"MacBook Pro";
+    goods2.price = 12999.00;
+    goods2.imageURL = @"https://example.com/macbook.jpg";
+    goods2.stockCount = 50;
+    [self.goodsCache addObject:goods2];
+}
+
+@end
+```
+
+### 异步方法实现
+
+对于耗时操作，使用回调或block实现异步调用：
+
+```objective-c
+// 在GoodsModuleService.h中定义
+
+/// 商品加载完成回调
+typedef void (^GoodsLoadCompletion)(NSArray<id<GoodsProtocol>>* _Nullable goods, NSError* _Nullable error);
+
+@protocol GoodsModuleService <NSObject>
+
+/// 异步加载商品列表
+/// @param completion 加载完成回调
+- (void)loadGoodsListWithCompletion:(GoodsLoadCompletion)completion;
+
+@end
+```
+
+```objective-c
+// 在GoodsModule.m中实现
+
+- (void)loadGoodsListWithCompletion:(GoodsLoadCompletion)completion {
+    // 在后台线程加载数据
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        // 模拟网络请求
+        [NSThread sleepForTimeInterval:2.0];
+
+        // 加载数据
+        NSArray *goods = [self fetchGoodsFromServer];
+
+        // 回到主线程回调
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (completion) {
+                completion(goods, nil);
+            }
+        });
+    });
+}
+```
+
+---
+
+## 调用Remote API
+
+其他模块通过BFModule宏调用Remote API。
+
+### 基本调用方式
+
+```objective-c
+//
+//  ShoppingCartViewController.m
+//  Sale
+//
+
+#import "ShoppingCartViewController.h"
+#import "GoodsModuleService.h"  // 只导入协议
+#import <BifrostHeader.h>
+
+@interface ShoppingCartViewController ()
+@property (nonatomic, strong) NSMutableArray *cartItems;
+@end
+
+@implementation ShoppingCartViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    // 加载购物车商品信息
+    [self loadCartGoods];
+}
+
+- (void)loadCartGoods {
+    // 1. 获取商品模块实例
+    id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+
+    // 2. 检查模块是否存在
+    if (!goodsModule) {
+        NSLog(@"❌ 商品模块未注册");
+        return;
+    }
+
+    // 3. 遍历购物车，获取商品详情
+    for (NSString *goodsId in self.cartItems) {
+        // 调用协议方法
+        id<GoodsProtocol> goods = [goodsModule goodsById:goodsId];
+
+        if (goods) {
+            // 使用商品数据
+            NSLog(@"商品：%@ - ¥%.2f", goods.name, goods.price);
+            [self displayGoods:goods];
+        } else {
+            NSLog(@"⚠️ 商品不存在：%@", goodsId);
+        }
+    }
+}
+
+- (void)displayGoods:(id<GoodsProtocol>)goods {
+    // 显示商品信息到UI
+    // ...
+}
+
+@end
+```
+
+### 缓存模块实例
+
+对于频繁调用的场景，缓存模块实例可以提高性能：
+
+```objective-c
+@interface ShoppingCartViewController ()
+@property (nonatomic, strong) id<GoodsModuleService> goodsModule;  // 缓存实例
+@property (nonatomic, strong) id<UserModuleService> userModule;    // 缓存实例
+@end
+
+@implementation ShoppingCartViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    // 在初始化时获取并缓存模块实例
+    self.goodsModule = BFModule(GoodsModuleService);
+    self.userModule = BFModule(UserModuleService);
+}
+
+- (void)someMethod {
+    // 直接使用缓存的实例，无需每次都调用BFModule
+    id<GoodsProtocol> goods = [self.goodsModule goodsById:@"123"];
+    id<UserProtocol> user = [self.userModule currentUser];
+}
+
+@end
+```
+
+### 检查可选方法
+
+对于`@optional`标记的方法，使用前需要检查：
+
+```objective-c
+id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+
+// 检查可选方法是否实现
+if ([goodsModule respondsToSelector:@selector(searchGoods:)]) {
+    NSArray *results = [goodsModule searchGoods:@"iPhone"];
+    NSLog(@"搜索结果：%ld个", results.count);
+} else {
+    NSLog(@"⚠️ searchGoods:方法未实现");
+}
+```
+
+---
+
+## 异常处理和容错
+
+良好的异常处理可以提高代码健壮性。
+
+### 模块不存在的处理
+
+```objective-c
+id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+
+if (!goodsModule) {
+    NSLog(@"❌ 商品模块未注册，可能原因：");
+    NSLog(@"  1. 模块未添加到项目中");
+    NSLog(@"  2. +load方法中未调用BFRegister");
+    NSLog(@"  3. AppDelegate中未调用setupAllModules");
+
+    // 显示错误提示
+    [self showErrorAlert:@"商品模块不可用"];
+    return;
+}
+
+// 继续使用模块
+```
+
+### 方法返回nil的处理
+
+```objective-c
+id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+id<GoodsProtocol> goods = [goodsModule goodsById:@"999"];
+
+if (!goods) {
+    NSLog(@"⚠️ 商品不存在或已下架");
+
+    // 显示占位信息
+    [self showPlaceholderForUnavailableGoods];
+    return;
+}
+
+// 使用商品数据
+NSLog(@"商品名称：%@", goods.name);
+```
+
+### 使用断言进行开发时检查
+
+```objective-c
+- (void)setup {
+    // 在开发环境使用断言，确保依赖的模块已注册
+#ifdef DEBUG
+    NSAssert(BFModule(UserModuleService) != nil, @"UserModule必须在GoodsModule之前初始化");
+#endif
+
+    // 正常初始化
+}
+```
+
+---
+
+## 性能优化
+
+### 1. 缓存模块实例
+
+```objective-c
+@interface OrderViewController ()
+@property (nonatomic, strong) id<GoodsModuleService> goodsModule;
+@property (nonatomic, strong) id<UserModuleService> userModule;
+@end
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    // 一次性获取，多次使用
+    self.goodsModule = BFModule(GoodsModuleService);
+    self.userModule = BFModule(UserModuleService);
+}
+```
+
+### 2. 批量获取数据
+
+```objective-c
+// ❌ 不好的实现：多次单独获取
+for (NSString *goodsId in goodsIds) {
+    id<GoodsProtocol> goods = [goodsModule goodsById:goodsId];
+    // 处理商品
+}
+
+// ✅ 好的实现：一次性批量获取
+- (NSArray<id<GoodsProtocol>>*)goodsByIds:(NSArray<NSString*>*)goodsIds;
+
+NSArray *goodsList = [goodsModule goodsByIds:goodsIds];
+```
+
+### 3. 异步加载非关键数据
+
+```objective-c
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    // 同步加载关键数据
+    id<UserProtocol> user = [userModule currentUser];
+    [self displayUserInfo:user];
+
+    // 异步加载非关键数据
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSArray *recommendGoods = [goodsModule recommendGoods];
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self displayRecommendGoods:recommendGoods];
+        });
+    });
+}
+```
+
+---
+
+## 实际应用场景
+
+### 场景1：订单模块组装数据
+
+订单模块需要同时展示用户信息和商品信息：
+
+```objective-c
+//
+//  OrderDetailViewController.m
+//  Order
+//
+
+- (void)loadOrderDetail:(NSString*)orderId {
+    // 1. 获取订单模块
+    id<OrderModuleService> orderModule = BFModule(OrderModuleService);
+    id<OrderProtocol> order = [orderModule orderById:orderId];
+
+    if (!order) {
+        [self showErrorAlert:@"订单不存在"];
+        return;
+    }
+
+    // 2. 获取用户信息
+    id<UserModuleService> userModule = BFModule(UserModuleService);
+    id<UserProtocol> user = [userModule userById:order.userId];
+
+    // 3. 获取商品信息
+    id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+    NSMutableArray *goodsList = [NSMutableArray array];
+    for (NSString *goodsId in order.goodsIds) {
+        id<GoodsProtocol> goods = [goodsModule goodsById:goodsId];
+        if (goods) {
+            [goodsList addObject:goods];
+        }
+    }
+
+    // 4. 组装数据并显示
+    [self displayOrder:order user:user goodsList:goodsList];
+}
+```
+
+### 场景2：模块间的双向通信
+
+购物车添加商品时，需要通知商品模块更新库存：
+
+```objective-c
+// 在GoodsModuleService.h中定义通知
+static NSString *const kGoodsStockDidChangeNotification = @"GoodsStockDidChangeNotification";
+
+// 在GoodsModule.m中发送通知
+- (BOOL)decreaseStock:(NSString*)goodsId count:(NSInteger)count {
+    // 减少库存
+    GoodsModel *goods = [self findGoodsById:goodsId];
+    if (goods.stockCount < count) {
+        return NO;
+    }
+
+    goods.stockCount -= count;
+
+    // 发送通知
+    [[NSNotificationCenter defaultCenter] postNotificationName:kGoodsStockDidChangeNotification
+                                                        object:nil
+                                                      userInfo:@{@"goodsId": goodsId,
+                                                                 @"stockCount": @(goods.stockCount)}];
+    return YES;
+}
+
+// 在ShoppingCartViewController.m中监听通知
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleGoodsStockChanged:)
+                                                 name:kGoodsStockDidChangeNotification
+                                               object:nil];
+}
+
+- (void)handleGoodsStockChanged:(NSNotification*)notification {
+    NSString *goodsId = notification.userInfo[@"goodsId"];
+    NSInteger stockCount = [notification.userInfo[@"stockCount"] integerValue];
+
+    NSLog(@"商品 %@ 库存已更新：%ld", goodsId, stockCount);
+    [self updateCartItemStock:goodsId stock:stockCount];
+}
+```
+
+### 场景3：模块降级
+
+当某个模块不可用时，提供降级方案：
+
+```objective-c
+- (void)loadRecommendGoods {
+    id<GoodsModuleService> goodsModule = BFModule(GoodsModuleService);
+
+    NSArray *recommendGoods = nil;
+
+    // 尝试使用推荐算法
+    if ([goodsModule respondsToSelector:@selector(recommendGoods)]) {
+        recommendGoods = [goodsModule recommendGoods];
+    }
+
+    // 降级：如果推荐不可用，显示所有商品
+    if (!recommendGoods || recommendGoods.count == 0) {
+        NSLog(@"⚠️ 推荐商品不可用，使用默认商品列表");
+        recommendGoods = [goodsModule allGoodsList];
+    }
+
+    // 再次降级：如果商品列表也不可用，显示占位符
+    if (!recommendGoods || recommendGoods.count == 0) {
+        NSLog(@"❌ 商品数据不可用，显示占位符");
+        [self showEmptyPlaceholder];
+        return;
+    }
+
+    [self displayGoods:recommendGoods];
+}
+```
+
+---
+
+## 小结
+
+本章我们深入学习了Bifrost的Remote API系统：
+
+1. **Remote API概述**
+   - 用于复杂数据交互和方法调用
+   - 类型安全，支持IDE代码补全
+   - 通过协议实现模块解耦
+
+2. **Service协议设计**
+   - 遵循最小化、职责单一、向后兼容原则
+   - 使用`@required`和`@optional`标记方法
+   - 包含通知、URL、Model协议、Service协议
+
+3. **Model协议定义**
+   - 定义跨模块传递的数据对象接口
+   - 只暴露必要的属性和方法
+   - 隐藏具体实现类的私有属性
+
+4. **实现Service方法**
+   - 在Module类中实现Service协议
+   - 添加参数验证和异常处理
+   - 支持同步和异步方法
+
+5. **调用Remote API**
+   - 使用BFModule宏获取模块实例
+   - 缓存模块实例提高性能
+   - 检查可选方法是否实现
+
+6. **异常处理**
+   - 处理模块不存在的情况
+   - 处理方法返回nil的情况
+   - 使用断言进行开发时检查
+
+7. **性能优化**
+   - 缓存模块实例
+   - 批量获取数据
+   - 异步加载非关键数据
+
+---
+
+## 下一步
+
+现在你已经掌握了Remote API系统的所有功能。
+
+在下一章节中，我们将学习完整的模块开发流程：
+- 模块结构设计
+- 模块生命周期管理
+- 资源管理
+- 测试和调试
+
+👉 [下一章：模块开发指南](./06-模块开发指南.md)

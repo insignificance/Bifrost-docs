@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Bifrost - iOS业务模块化架构完整指南">
+    <title>Bifrost使用文档 - iOS模块化架构指南</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 3rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .hero {
+            text-align: center;
+            color: white;
+            margin-bottom: 4rem;
+            animation: fadeInDown 0.8s;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .hero .subtitle {
+            font-size: 1.4rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+            font-weight: 300;
+        }
+
+        .hero .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .feature {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .doc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            animation: fadeInUp 0.8s 0.3s both;
+        }
+
+        .doc-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-decoration: none;
+            color: #24292e;
+            display: block;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .doc-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s;
+        }
+
+        .doc-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .doc-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            animation: bounce 2s infinite;
+        }
+
+        .doc-card:hover .card-icon {
+            animation: bounce 0.6s;
+        }
+
+        .doc-card h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: #667eea;
+        }
+
+        .doc-card p {
+            color: #586069;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-arrow {
+            color: #667eea;
+            font-size: 1.5rem;
+            font-weight: bold;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s;
+        }
+
+        .doc-card:hover .card-arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 4rem;
+            padding: 2rem 0;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            animation: fadeIn 1s 0.6s both;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 1px solid rgba(255,255,255,0.5);
+            transition: border-color 0.3s;
+        }
+
+        .footer a:hover {
+            border-color: white;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            .hero .subtitle {
+                font-size: 1.2rem;
+            }
+            .doc-grid {
+                grid-template-columns: 1fr;
+            }
+            .features {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="hero">
+            <h1>📚 Bifrost</h1>
+            <p class="subtitle">iOS业务模块化架构完整指南</p>
+            <p class="description">
+                从零开始掌握Bifrost，打造可维护、可扩展的iOS应用架构
+            </p>
+            <div class="features">
+                <div class="feature">✅ 完全解耦</div>
+                <div class="feature">🚀 独立开发</div>
+                <div class="feature">⚡ 高性能</div>
+                <div class="feature">📖 详尽文档</div>
+            </div>
+        </div>
+
+        <div class="doc-grid">
+            
+        <a href="README.html" class="doc-card">
+            <div class="card-icon">📚</div>
+            <h3>文档导航</h3>
+            <p>快速找到你需要的内容</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="01-什么是Bifrost.html" class="doc-card">
+            <div class="card-icon">🎯</div>
+            <h3>第1章 什么是Bifrost</h3>
+            <p>了解Bifrost的背景和核心理念</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="02-核心概念.html" class="doc-card">
+            <div class="card-icon">💡</div>
+            <h3>第2章 核心概念</h3>
+            <p>业务模块、代码依赖、三层架构</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="03-快速开始.html" class="doc-card">
+            <div class="card-icon">🚀</div>
+            <h3>第3章 快速开始</h3>
+            <p>10分钟上手Bifrost</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="04-路由系统详解.html" class="doc-card">
+            <div class="card-icon">🗺️</div>
+            <h3>第4章 路由系统详解</h3>
+            <p>Router URL的使用和高级特性</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="05-远程API详解.html" class="doc-card">
+            <div class="card-icon">🔌</div>
+            <h3>第5章 远程API详解</h3>
+            <p>Service协议设计和模块间通信</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="06-模块开发指南.html" class="doc-card">
+            <div class="card-icon">⚙️</div>
+            <h3>第6章 模块开发指南</h3>
+            <p>完整的模块开发流程</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="07-最佳实践.html" class="doc-card">
+            <div class="card-icon">✨</div>
+            <h3>第7章 最佳实践</h3>
+            <p>命名规范、性能优化、常见问题</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        <a href="08-Demo项目解析.html" class="doc-card">
+            <div class="card-icon">🎓</div>
+            <h3>第8章 Demo项目解析</h3>
+            <p>通过实际项目深入理解</p>
+            <div class="card-arrow">→</div>
+        </a>
+        
+        </div>
+
+        <div class="footer">
+            <p>
+                用心打造的iOS模块化架构文档<br>
+                <a href="https://github.com/youzan/Bifrost" target="_blank">GitHub仓库</a> ·
+                <a href="README.html">开始阅读</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
