@@ -3,456 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="完整的模块开发流程">
     <title>第6章 模块开发指南 - Bifrost文档</title>
-
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
-
-    <style>
-        :root {
-            --primary-color: #0366d6;
-            --primary-dark: #0256c7;
-            --bg-color: #f6f8fa;
-            --text-color: #24292e;
-            --border-color: #e1e4e8;
-            --sidebar-width: 280px;
-            --header-height: 60px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            line-height: 1.7;
-            color: var(--text-color);
-            background: var(--bg-color);
-        }
-
-        /* 顶部栏 */
-        .header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: var(--header-height);
-            background: white;
-            border-bottom: 1px solid var(--border-color);
-            z-index: 100;
-            display: flex;
-            align-items: center;
-            padding: 0 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            width: 100%;
-            margin: 0 auto;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .logo {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: var(--primary-color);
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .breadcrumb {
-            font-size: 0.9rem;
-            color: #586069;
-        }
-
-        .breadcrumb a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        /* 侧边栏 */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: var(--header-height);
-            width: var(--sidebar-width);
-            height: calc(100vh - var(--header-height));
-            background: white;
-            border-right: 1px solid var(--border-color);
-            overflow-y: auto;
-            z-index: 50;
-        }
-
-        .sidebar-content {
-            padding: 2rem 1.5rem;
-        }
-
-        .sidebar h3 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: #586069;
-            margin-bottom: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .doc-nav {
-            list-style: none;
-        }
-
-        .doc-nav li {
-            margin: 0.3rem 0;
-        }
-
-        .doc-nav a {
-            display: block;
-            padding: 0.6rem 1rem;
-            color: var(--text-color);
-            text-decoration: none;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-
-        .doc-nav a:hover {
-            background: var(--bg-color);
-            color: var(--primary-color);
-        }
-
-        .doc-nav a.active {
-            background: var(--primary-color);
-            color: white;
-            font-weight: 500;
-        }
-
-        /* 主内容区 */
-        .main {
-            margin-left: var(--sidebar-width);
-            margin-top: var(--header-height);
-            padding: 3rem;
-        }
-
-        .content-wrapper {
-            max-width: 900px;
-            margin: 0 auto;
-            background: white;
-            padding: 3rem;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
-
-        /* Markdown内容样式 */
-        .markdown-body {
-            font-size: 16px;
-        }
-
-        .markdown-body h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 2rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 3px solid var(--primary-color);
-            color: var(--primary-color);
-        }
-
-        .markdown-body h2 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-top: 3rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--border-color);
-        }
-
-        .markdown-body h3 {
-            font-size: 1.4rem;
-            font-weight: 600;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .markdown-body h4 {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-top: 1.5rem;
-            margin-bottom: 0.8rem;
-            color: #586069;
-        }
-
-        .markdown-body p {
-            margin: 1.2rem 0;
-            line-height: 1.8;
-        }
-
-        .markdown-body ul, .markdown-body ol {
-            margin: 1.2rem 0;
-            padding-left: 2rem;
-        }
-
-        .markdown-body li {
-            margin: 0.5rem 0;
-            line-height: 1.7;
-        }
-
-        .markdown-body a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .markdown-body a:hover {
-            text-decoration: underline;
-        }
-
-        .markdown-body code {
-            background: #f6f8fa;
-            padding: 0.2em 0.4em;
-            border-radius: 3px;
-            font-family: "SF Mono", Monaco, Consolas, monospace;
-            font-size: 0.9em;
-            color: #e83e8c;
-        }
-
-        .markdown-body pre {
-            background: #f6f8fa;
-            padding: 1.2rem;
-            border-radius: 6px;
-            overflow-x: auto;
-            margin: 1.5rem 0;
-            border: 1px solid var(--border-color);
-        }
-
-        .markdown-body pre code {
-            background: none;
-            padding: 0;
-            color: inherit;
-            font-size: 0.9rem;
-        }
-
-        .markdown-body table {
-            border-collapse: collapse;
-            width: 100%;
-            margin: 1.5rem 0;
-        }
-
-        .markdown-body th, .markdown-body td {
-            border: 1px solid var(--border-color);
-            padding: 0.8rem 1rem;
-            text-align: left;
-        }
-
-        .markdown-body th {
-            background: var(--bg-color);
-            font-weight: 600;
-        }
-
-        .markdown-body tr:hover {
-            background: #fafbfc;
-        }
-
-        .markdown-body blockquote {
-            margin: 1.5rem 0;
-            padding: 1rem 1.5rem;
-            background: #f6f8fa;
-            border-left: 4px solid var(--primary-color);
-            border-radius: 0 6px 6px 0;
-        }
-
-        .markdown-body img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 6px;
-            margin: 1.5rem 0;
-        }
-
-        /* Mermaid图表 */
-        .mermaid {
-            margin: 2rem 0;
-            text-align: center;
-        }
-
-        /* 页面导航 */
-        .page-navigation {
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 2px solid var(--border-color);
-            display: flex;
-            justify-content: space-between;
-            gap: 1rem;
-        }
-
-        .nav-btn {
-            flex: 1;
-            max-width: 45%;
-            padding: 1.5rem;
-            background: white;
-            border: 2px solid var(--border-color);
-            border-radius: 8px;
-            text-decoration: none;
-            color: var(--text-color);
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .nav-btn:hover {
-            border-color: var(--primary-color);
-            background: var(--bg-color);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(3,102,214,0.1);
-        }
-
-        .nav-btn.prev {
-            justify-content: flex-start;
-        }
-
-        .nav-btn.next {
-            justify-content: flex-end;
-            text-align: right;
-        }
-
-        .nav-icon {
-            font-size: 1.5rem;
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-
-        .nav-text {
-            margin: 0 1rem;
-        }
-
-        .nav-label {
-            font-size: 0.8rem;
-            color: #586069;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.3rem;
-        }
-
-        .nav-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--text-color);
-        }
-
-        /* 回到顶部 */
-        .back-to-top {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            width: 50px;
-            height: 50px;
-            background: var(--primary-color);
-            color: white;
-            border-radius: 50%;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            transition: all 0.3s;
-            z-index: 1000;
-        }
-
-        .back-to-top:hover {
-            background: var(--primary-dark);
-            transform: translateY(-3px);
-        }
-
-        .back-to-top.show {
-            display: flex;
-        }
-
-        /* 响应式 */
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .main {
-                margin-left: 0;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header {
-                padding: 0 1rem;
-            }
-            .main {
-                padding: 1.5rem;
-            }
-            .content-wrapper {
-                padding: 1.5rem;
-            }
-            .markdown-body h1 {
-                font-size: 2rem;
-            }
-            .page-navigation {
-                flex-direction: column;
-            }
-            .nav-btn {
-                max-width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="header">
         <div class="header-content">
-            <a href="index.html" class="logo">
-                <span>📚</span>
-                <span>Bifrost 文档</span>
-            </a>
-            <div class="breadcrumb">
-                <a href="index.html">首页</a> / 第6章 模块开发指南
-            </div>
+            <a href="index.html" class="logo"><span>📚</span><span>Bifrost 文档</span></a>
+            <div class="breadcrumb"><a href="index.html">首页</a> / 第6章 模块开发指南</div>
         </div>
     </header>
-
     <nav class="sidebar"><div class="sidebar-content"><h3>📖 文档目录</h3><ul class="doc-nav"><li><a href="README.html">📚 文档导航</a></li><li><a href="01-什么是Bifrost.html">🎯 第1章 什么是Bifrost</a></li><li><a href="02-核心概念.html">💡 第2章 核心概念</a></li><li><a href="03-快速开始.html">🚀 第3章 快速开始</a></li><li><a href="04-路由系统详解.html">🗺️ 第4章 路由系统详解</a></li><li><a href="05-远程API详解.html">🔌 第5章 远程API详解</a></li><li><a href="06-模块开发指南.html" class="active">⚙️ 第6章 模块开发指南</a></li><li><a href="07-最佳实践.html">✨ 第7章 最佳实践</a></li><li><a href="08-Demo项目解析.html">🎓 第8章 Demo项目解析</a></li></ul></div></nav>
-
     <main class="main">
         <div class="content-wrapper">
             <article class="markdown-body" id="content"></article>
-            <nav class="page-navigation">
-                
-            <a href="05-远程API详解.html" class="nav-btn prev">
-                <span class="nav-icon">←</span>
-                <div class="nav-text">
-                    <div class="nav-label">上一章</div>
-                    <div class="nav-title">第5章 远程API详解</div>
-                </div>
-            </a>
-            
-                
-            <a href="07-最佳实践.html" class="nav-btn next">
-                <div class="nav-text">
-                    <div class="nav-label">下一章</div>
-                    <div class="nav-title">第7章 最佳实践</div>
-                </div>
-                <span class="nav-icon">→</span>
-            </a>
-            
-            </nav>
+            <nav class="page-navigation"><a href="05-远程API详解.html" class="nav-btn prev"><span class="nav-icon">←</span><div class="nav-text"><div class="nav-label">上一章</div><div class="nav-title">第5章 远程API详解</div></div></a><a href="07-最佳实践.html" class="nav-btn next"><div class="nav-text"><div class="nav-label">下一章</div><div class="nav-title">第7章 最佳实践</div></div><span class="nav-icon">→</span></a></nav>
         </div>
     </main>
-
     <div class="back-to-top" id="backToTop">↑</div>
-
+    
     <script>
         // 初始化Mermaid
         mermaid.initialize({
@@ -461,41 +34,37 @@
             securityLevel: 'loose',
         });
 
-        // 自定义渲染器 - 修复中文锚点问题
+        // 自定义渲染器
         const renderer = new marked.Renderer();
 
-        // 覆盖heading渲染，使用与GitHub Markdown完全一致的ID生成规则
-        renderer.heading = function(text, level, raw) {
-            // 移除HTML标签
+        // ID生成规则：完全匹配GitHub Markdown
+        renderer.heading = function(text, level) {
             const plainText = text.replace(/<[^>]+>/g, '');
 
-            // 生成ID，匹配GitHub/Markdown的规则：
+            // 完全按照Markdown锚点规则生成ID：
             // 1. 转小写
-            // 2. 移除emoji（📖等）
-            // 3. 移除标点符号（：？、。！等）
-            // 4. 空格替换为-
-            // 5. 保留中文、英文、数字、-
+            // 2. 移除标点符号（保留英文字母、数字、中文）
+            // 3. 空格替换为-
             const id = plainText
                 .toLowerCase()
-                // 移除emoji (U+1F000 - U+1F9FF)
-                .replace(/[\u1F000-\u1F9FF]/g, '')
-                // 移除中英文标点符号
+                // 只移除这些符号，保留字母、数字、中文
                 .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
-                .replace(/[:?.,;!'"()\[\]<>{}]/g, '')
+                .replace(/[?.,;!'"()\[\]<>{}]/g, '')
+                // 移除emoji（使用更安全的方式）
+                .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')
                 // 空格替换为-
                 .replace(/\s+/g, '-')
-                // 多个-合并为一个
+                // 多个-合并
                 .replace(/-+/g, '-')
-                // 去掉首尾的-
+                // 去首尾-
                 .replace(/^-|-$/g, '')
-                // 去掉开头的数字和点（如果有）
-                .replace(/^\d+\./, '')
                 .trim();
 
-            return `<h${level} id="${id}">${text}</h${level}>`;
-        };
+            return `<h${{level}} id="${{id}}">${{text}}</h${{level}}>`;
+        }};
 
-        // 配置marked
         marked.setOptions({
             renderer: renderer,
             breaks: true,
@@ -510,7 +79,8 @@
             }
         });
 
-        // Markdown内容
+        // 渲染Markdown
+        const contentEl = document.getElementById('content');
         const markdown = `# 06 - 模块开发指南
 
 本章提供完整的Bifrost模块开发流程指南，从零开始创建一个业务模块。
@@ -1518,78 +1088,47 @@ pod install
 
 👉 [下一章：最佳实践](07-最佳实践.html)
 `;
-
-        // 渲染
-        const contentEl = document.getElementById('content');
         contentEl.innerHTML = marked.parse(markdown);
 
-        // === 调试代码 ===
-        // 显示所有生成的ID
-        setTimeout(() => {
-            console.log('=== 生成的标题ID ===');
-            contentEl.querySelectorAll('h1[id], h2[id], h3[id], h4[id]').forEach(h => {
-                console.log(`${h.tagName} id="${h.id}" text="${h.textContent}"`);
-            });
-
-            console.log('\n=== 链接的锚点 ===');
-            contentEl.querySelectorAll('a[href^="#"]').forEach(a => {
-                const href = a.getAttribute('href');
-                const target = document.getElementById(href.substring(1));
-                console.log(`${href} -> ${target ? '✅找到' : '❌未找到'} (${a.textContent})`);
-            });
-        }, 200);
-
-        // 处理Mermaid图表
+        // 处理Mermaid
         const mermaidBlocks = contentEl.querySelectorAll('pre code.language-mermaid');
-        mermaidBlocks.forEach((block, index) => {
+        mermaidBlocks.forEach(block => {
             const pre = block.parentElement;
-            const code = block.textContent;
             const div = document.createElement('div');
             div.className = 'mermaid';
-            div.textContent = code;
+            div.textContent = block.textContent;
             pre.replaceWith(div);
         });
-
-        // 渲染Mermaid
         mermaid.run();
 
-        // 修复锚点跳转 - 考虑固定头部的高度
-        function scrollToAnchor(target) {
+        // 滚动函数
+        function smoothScrollTo(target) {
             const headerOffset = 80;
             const elementPosition = target.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
         }
 
-        // 处理所有锚点链接点击
-        contentEl.addEventListener('click', function(e) {
-            const link = e.target.closest('a[href^="#"]');
-            if (link) {
-                e.preventDefault();
-                e.stopPropagation();
+        // 锚点点击处理 - 使用捕获阶段确保优先执行
+        document.addEventListener('click', function(e) {
+            const link = e.target.closest('a');
+            if (!link) return;
 
-                // 关键修复：解码URL编码的锚点
-                const rawHash = link.getAttribute('href').substring(1);
-                const hash = decodeURIComponent(rawHash);
-                const target = document.getElementById(hash);
+            const href = link.getAttribute('href');
+            if (!href || !href.startsWith('#')) return;
 
-                console.log('🖱️ 点击链接:', link.textContent);
-                console.log('📍 原始锚点:', rawHash);
-                console.log('📍 解码后:', hash);
-                console.log('🎯 目标:', target);
+            e.preventDefault();
+            e.stopPropagation();
 
-                if (target) {
-                    scrollToAnchor(target);
-                    history.pushState(null, null, '#' + hash);
-                } else {
-                    console.error('❌ 未找到ID:', hash);
-                }
+            // URL解码
+            const anchor = decodeURIComponent(href.substring(1));
+            const target = document.getElementById(anchor);
 
-                return false;
+            if (target) {
+                smoothScrollTo(target);
+                history.pushState(null, null, href);
+            } else {
+                console.error('未找到元素 ID:', anchor);
             }
         }, true);
 
@@ -1602,17 +1141,19 @@ pod install
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // 页面加载时处理URL中的锚点
-        if (window.location.hash) {
-            setTimeout(() => {
-                const rawHash = window.location.hash.substring(1);
-                const hash = decodeURIComponent(rawHash);
-                const element = document.getElementById(hash);
-                if (element) {
-                    scrollToAnchor(element);
-                }
-            }, 200);
-        }
+        // 页面加载时的锚点处理
+        window.addEventListener('load', function() {
+            if (window.location.hash) {
+                setTimeout(() => {
+                    const anchor = decodeURIComponent(window.location.hash.substring(1));
+                    const element = document.getElementById(anchor);
+                    if (element) {
+                        smoothScrollTo(element);
+                    }
+                }, 300);
+            }
+        });
     </script>
+
 </body>
 </html>
