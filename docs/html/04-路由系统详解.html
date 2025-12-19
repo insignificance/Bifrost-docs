@@ -1398,6 +1398,22 @@ didReceiveRemoteNotification:(NSDictionary *)userInfo {
         const contentEl = document.getElementById('content');
         contentEl.innerHTML = marked.parse(markdown);
 
+        // === 调试代码 ===
+        // 显示所有生成的ID
+        setTimeout(() => {
+            console.log('=== 生成的标题ID ===');
+            contentEl.querySelectorAll('h1[id], h2[id], h3[id], h4[id]').forEach(h => {
+                console.log(`${h.tagName} id="${h.id}" text="${h.textContent}"`);
+            });
+
+            console.log('\n=== 链接的锚点 ===');
+            contentEl.querySelectorAll('a[href^="#"]').forEach(a => {
+                const href = a.getAttribute('href');
+                const target = document.getElementById(href.substring(1));
+                console.log(`${href} -> ${target ? '✅找到' : '❌未找到'} (${a.textContent})`);
+            });
+        }, 200);
+
         // 处理Mermaid图表
         const mermaidBlocks = contentEl.querySelectorAll('pre code.language-mermaid');
         mermaidBlocks.forEach((block, index) => {
@@ -1412,18 +1428,9 @@ didReceiveRemoteNotification:(NSDictionary *)userInfo {
         // 渲染Mermaid
         mermaid.run();
 
-        // 回到顶部
-        const backToTop = document.getElementById('backToTop');
-        window.addEventListener('scroll', () => {
-            backToTop.classList.toggle('show', window.pageYOffset > 300);
-        });
-        backToTop.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-
         // 修复锚点跳转 - 考虑固定头部的高度
         function scrollToAnchor(target) {
-            const headerOffset = 80; // 固定头部高度 + 额外间距
+            const headerOffset = 80;
             const elementPosition = target.getBoundingClientRect().top;
             const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
@@ -1434,32 +1441,53 @@ didReceiveRemoteNotification:(NSDictionary *)userInfo {
         }
 
         // 处理所有锚点链接点击
-        document.addEventListener('click', function(e) {
-            const target = e.target.closest('a[href^="#"]');
-            if (target) {
+        contentEl.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href^="#"]');
+            if (link) {
                 e.preventDefault();
-                const id = target.getAttribute('href').substring(1);
-                const element = document.getElementById(id);
-                if (element) {
-                    scrollToAnchor(element);
-                    // 更新URL但不跳转
-                    history.pushState(null, null, '#' + id);
+                e.stopPropagation();
+
+                // 关键修复：解码URL编码的锚点
+                const rawHash = link.getAttribute('href').substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const target = document.getElementById(hash);
+
+                console.log('🖱️ 点击链接:', link.textContent);
+                console.log('📍 原始锚点:', rawHash);
+                console.log('📍 解码后:', hash);
+                console.log('🎯 目标:', target);
+
+                if (target) {
+                    scrollToAnchor(target);
+                    history.pushState(null, null, '#' + hash);
+                } else {
+                    console.error('❌ 未找到ID:', hash);
                 }
+
+                return false;
             }
+        }, true);
+
+        // 回到顶部
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('show', window.pageYOffset > 300);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
         // 页面加载时处理URL中的锚点
-        window.addEventListener('DOMContentLoaded', function() {
-            if (window.location.hash) {
-                setTimeout(() => {
-                    const id = window.location.hash.substring(1);
-                    const element = document.getElementById(id);
-                    if (element) {
-                        scrollToAnchor(element);
-                    }
-                }, 100);
-            }
-        });
+        if (window.location.hash) {
+            setTimeout(() => {
+                const rawHash = window.location.hash.substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const element = document.getElementById(hash);
+                if (element) {
+                    scrollToAnchor(element);
+                }
+            }, 200);
+        }
     </script>
 </body>
 </html>

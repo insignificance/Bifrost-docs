@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>锚点测试</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+</head>
+<body>
+    <h1>ID生成测试</h1>
+    <div id="output"></div>
+    <hr>
+    <div id="content"></div>
+
+    <script>
+        // 自定义渲染器
+        const renderer = new marked.Renderer();
+
+        renderer.heading = function(text, level, raw) {
+            const plainText = text.replace(/<[^>]+>/g, '');
+            const id = plainText
+                .toLowerCase()
+                .replace(/[\u1F000-\u1F9FF]/g, '')
+                .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
+                .replace(/[:?.,;!'"()\[\]<>{}]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .replace(/^\d+\./, '')
+                .trim();
+
+            console.log(`"${text}" -> id="${id}"`);
+            return `<h${level} id="${id}">${text}</h${level}>`;
+        };
+
+        marked.setOptions({
+            renderer: renderer,
+            breaks: true,
+            gfm: true,
+        });
+
+        // 测试Markdown
+        const markdown = `
+## 📖 目录
+- [背景：iOS应用的模块化困境](#背景ios应用的模块化困境)
+- [Bifrost是什么](#bifrost是什么)
+- [传统架构 vs Bifrost架构](#传统架构-vs-bifrost架构)
+
+## 背景：iOS应用的模块化困境
+
+这是内容1
+
+## Bifrost是什么
+
+这是内容2
+
+## 传统架构 vs Bifrost架构
+
+这是内容3
+`;
+
+        const html = marked.parse(markdown);
+        document.getElementById('content').innerHTML = html;
+
+        // 显示所有生成的ID
+        setTimeout(() => {
+            const headings = document.querySelectorAll('h2[id]');
+            let output = '<h2>生成的标题ID：</h2><ul>';
+            headings.forEach(h => {
+                output += `<li><code>${h.id}</code> - ${h.textContent}</li>`;
+            });
+            output += '</ul>';
+
+            // 显示链接中的锚点
+            output += '<h2>目录链接指向的锚点：</h2><ul>';
+            const links = document.querySelectorAll('a[href^="#"]');
+            links.forEach(a => {
+                const anchor = a.getAttribute('href');
+                output += `<li>${a.textContent} -> <code>${anchor}</code></li>`;
+            });
+            output += '</ul>';
+
+            document.getElementById('output').innerHTML = output;
+
+            // 检查匹配
+            console.log('=== 检查锚点是否匹配 ===');
+            links.forEach(a => {
+                const anchor = a.getAttribute('href').substring(1);
+                const target = document.getElementById(anchor);
+                console.log(`${anchor}: ${target ? '✅ 找到' : '❌ 未找到'}`);
+            });
+        }, 100);
+    </script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>锚点调试工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+    <style>
+        body { font-family: monospace; padding: 20px; }
+        .test { margin: 20px 0; padding: 10px; border: 1px solid #ddd; }
+        .success { background: #d4edda; }
+        .error { background: #f8d7da; }
+        code { background: #f0f0f0; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+    <h1>Bifrost文档锚点测试</h1>
+    <div id="results"></div>
+    <hr>
+    <div id="content"></div>
+
+    <script>
+        // 测试数据：Markdown中的标题和对应的锚点
+        const testCases = [
+            { title: '背景：iOS应用的模块化困境', anchor: '#背景ios应用的模块化困境' },
+            { title: 'Bifrost是什么', anchor: '#bifrost是什么' },
+            { title: 'Bifrost解决了什么问题', anchor: '#bifrost解决了什么问题' },
+            { title: '传统架构 vs Bifrost架构', anchor: '#传统架构-vs-bifrost架构' },
+            { title: '适用场景', anchor: '#适用场景' },
+        ];
+
+        // 当前的ID生成逻辑
+        function generateId(text) {
+            const plainText = text.replace(/<[^>]+>/g, '');
+            const id = plainText
+                .toLowerCase()
+                .replace(/[\u1F000-\u1F9FF]/g, '')
+                .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
+                .replace(/[:?.,;!'"()\[\]<>{}]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .replace(/^\d+\./, '')
+                .trim();
+            return id;
+        }
+
+        // 测试
+        let results = '<h2>测试结果：</h2>';
+        let allPass = true;
+
+        testCases.forEach(test => {
+            const generated = generateId(test.title);
+            const expected = test.anchor.substring(1); // 去掉#
+            const match = generated === expected;
+
+            if (!match) allPass = false;
+
+            results += `<div class="test ${match ? 'success' : 'error'}">
+                <div><strong>标题：</strong>${test.title}</div>
+                <div><strong>期望ID：</strong><code>${expected}</code></div>
+                <div><strong>生成ID：</strong><code>${generated}</code></div>
+                <div><strong>结果：</strong>${match ? '✅ 匹配' : '❌ 不匹配'}</div>
+            </div>`;
+        });
+
+        results += `<h2 style="color: ${allPass ? 'green' : 'red'}">${allPass ? '✅ 全部通过' : '❌ 存在问题'}</h2>`;
+        document.getElementById('results').innerHTML = results;
+
+        // 使用自定义渲染器渲染实际内容
+        const renderer = new marked.Renderer();
+        renderer.heading = function(text, level) {
+            const id = generateId(text);
+            console.log(`标题: "${text}" -> ID: "${id}"`);
+            return `<h${level} id="${id}">${text}</h${level}>`;
+        };
+
+        marked.setOptions({ renderer: renderer });
+
+        const markdown = `
+## 📖 目录
+- [背景：iOS应用的模块化困境](#背景ios应用的模块化困境)
+- [Bifrost是什么](#bifrost是什么)
+- [传统架构 vs Bifrost架构](#传统架构-vs-bifrost架构)
+
+## 背景：iOS应用的模块化困境
+内容1
+
+## Bifrost是什么
+内容2
+
+## 传统架构 vs Bifrost架构
+内容3
+`;
+
+        document.getElementById('content').innerHTML = marked.parse(markdown);
+
+        // 验证链接
+        setTimeout(() => {
+            console.log('=== 验证链接 ===');
+            const links = document.querySelectorAll('#content a[href^="#"]');
+            links.forEach(link => {
+                const hash = link.getAttribute('href').substring(1);
+                const target = document.getElementById(hash);
+                console.log(`锚点 "${hash}": ${target ? '✅ 找到' : '❌ 未找到'}`);
+            });
+        }, 100);
+    </script>
+</body>
+</html>
