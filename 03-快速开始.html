@@ -1,0 +1,1491 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="10分钟上手Bifrost">
+    <title>第3章 快速开始 - Bifrost文档</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0366d6;
+            --primary-dark: #0256c7;
+            --bg-color: #f6f8fa;
+            --text-color: #24292e;
+            --border-color: #e1e4e8;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background: var(--bg-color);
+        }
+
+        /* 顶部栏 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: #586069;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .sidebar-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .sidebar h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #586069;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-nav {
+            list-style: none;
+        }
+
+        .doc-nav li {
+            margin: 0.3rem 0;
+        }
+
+        .doc-nav a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .doc-nav a:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .doc-nav a.active {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 主内容区 */
+        .main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 3rem;
+        }
+
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Markdown内容样式 */
+        .markdown-body {
+            font-size: 16px;
+        }
+
+        .markdown-body h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .markdown-body h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .markdown-body h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: #586069;
+        }
+
+        .markdown-body p {
+            margin: 1.2rem 0;
+            line-height: 1.8;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin: 1.2rem 0;
+            padding-left: 2rem;
+        }
+
+        .markdown-body li {
+            margin: 0.5rem 0;
+            line-height: 1.7;
+        }
+
+        .markdown-body a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .markdown-body a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-body code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .markdown-body pre {
+            background: #f6f8fa;
+            padding: 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: 0.9rem;
+        }
+
+        .markdown-body table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        .markdown-body th, .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 0.8rem 1rem;
+            text-align: left;
+        }
+
+        .markdown-body th {
+            background: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .markdown-body tr:hover {
+            background: #fafbfc;
+        }
+
+        .markdown-body blockquote {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: #f6f8fa;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+        }
+
+        /* Mermaid图表 */
+        .mermaid {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        /* 页面导航 */
+        .page-navigation {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 45%;
+            padding: 1.5rem;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(3,102,214,0.1);
+        }
+
+        .nav-btn.prev {
+            justify-content: flex-start;
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .nav-text {
+            margin: 0 1rem;
+        }
+
+        .nav-label {
+            font-size: 0.8rem;
+            color: #586069;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .nav-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* 回到顶部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 1rem;
+            }
+            .main {
+                padding: 1.5rem;
+            }
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+            .markdown-body h1 {
+                font-size: 2rem;
+            }
+            .page-navigation {
+                flex-direction: column;
+            }
+            .nav-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span>📚</span>
+                <span>Bifrost 文档</span>
+            </a>
+            <div class="breadcrumb">
+                <a href="index.html">首页</a> / 第3章 快速开始
+            </div>
+        </div>
+    </header>
+
+    <nav class="sidebar"><div class="sidebar-content"><h3>📖 文档目录</h3><ul class="doc-nav"><li><a href="README.html">📚 文档导航</a></li><li><a href="01-什么是Bifrost.html">🎯 第1章 什么是Bifrost</a></li><li><a href="02-核心概念.html">💡 第2章 核心概念</a></li><li><a href="03-快速开始.html" class="active">🚀 第3章 快速开始</a></li><li><a href="04-路由系统详解.html">🗺️ 第4章 路由系统详解</a></li><li><a href="05-远程API详解.html">🔌 第5章 远程API详解</a></li><li><a href="06-模块开发指南.html">⚙️ 第6章 模块开发指南</a></li><li><a href="07-最佳实践.html">✨ 第7章 最佳实践</a></li><li><a href="08-Demo项目解析.html">🎓 第8章 Demo项目解析</a></li></ul></div></nav>
+
+    <main class="main">
+        <div class="content-wrapper">
+            <article class="markdown-body" id="content"></article>
+            <nav class="page-navigation">
+                
+            <a href="02-核心概念.html" class="nav-btn prev">
+                <span class="nav-icon">←</span>
+                <div class="nav-text">
+                    <div class="nav-label">上一章</div>
+                    <div class="nav-title">第2章 核心概念</div>
+                </div>
+            </a>
+            
+                
+            <a href="04-路由系统详解.html" class="nav-btn next">
+                <div class="nav-text">
+                    <div class="nav-label">下一章</div>
+                    <div class="nav-title">第4章 路由系统详解</div>
+                </div>
+                <span class="nav-icon">→</span>
+            </a>
+            
+            </nav>
+        </div>
+    </main>
+
+    <div class="back-to-top" id="backToTop">↑</div>
+
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
+
+        // 自定义渲染器 - 修复中文锚点问题
+        const renderer = new marked.Renderer();
+
+        // 覆盖heading渲染，使用与GitHub Markdown完全一致的ID生成规则
+        renderer.heading = function(text, level, raw) {
+            // 移除HTML标签
+            const plainText = text.replace(/<[^>]+>/g, '');
+
+            // 生成ID，完全匹配GitHub Markdown规则
+            const id = plainText
+                .toLowerCase()
+                // 移除emoji（使用正确的Unicode范围）
+                .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')
+                // 移除中英文标点符号
+                .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
+                .replace(/[?.,;!'"()\[\]<>{}]/g, '')
+                // 空格替换为-
+                .replace(/\s+/g, '-')
+                // 多个-合并为一个
+                .replace(/-+/g, '-')
+                // 去掉首尾的-
+                .replace(/^-|-$/g, '')
+                .trim();
+
+            return `<h${level} id="${id}">${text}</h${level}>`;
+        };
+
+        // 配置marked
+        marked.setOptions({
+            renderer: renderer,
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        // Markdown内容
+        const markdown = `# 03 - 快速开始
+
+## 📖 目录
+- [环境准备](#环境准备)
+- [安装Bifrost](#安装bifrost)
+- [创建第一个模块](#创建第一个模块)
+- [实现Router URL](#实现router-url)
+- [实现Remote API](#实现remote-api)
+- [完整示例](#完整示例)
+
+---
+
+## 环境准备
+
+### 系统要求
+
+- macOS 10.12+
+- Xcode 9.0+
+- iOS 7.0+
+- CocoaPods 1.0+
+
+### 检查CocoaPods
+
+\`\`\`bash
+# 检查CocoaPods是否已安装
+pod --version
+
+# 如果未安装，执行以下命令安装
+sudo gem install cocoapods
+\`\`\`
+
+---
+
+## 安装Bifrost
+
+### 步骤1：创建Podfile
+
+在你的项目根目录创建\`Podfile\`文件：
+
+\`\`\`bash
+cd YourProject
+pod init
+\`\`\`
+
+### 步骤2：添加Bifrost依赖
+
+编辑\`Podfile\`，添加Bifrost：
+
+\`\`\`ruby
+platform :ios, '8.0'
+
+target 'YourApp' do
+  use_frameworks!  # 如果使用Swift
+
+  # 添加Bifrost
+  pod 'Bifrost'
+
+end
+\`\`\`
+
+### 步骤3：安装依赖
+
+\`\`\`bash
+pod install
+\`\`\`
+
+### 步骤4：打开工作空间
+
+\`\`\`bash
+# 注意：安装后必须使用.xcworkspace文件，不要使用.xcodeproj
+open YourApp.xcworkspace
+\`\`\`
+
+### 安装流程图
+
+\`\`\`mermaid
+graph LR
+    A[创建Podfile] --> B[添加Bifrost依赖]
+    B --> C[pod install]
+    C --> D[打开.xcworkspace]
+    D --> E[开始使用Bifrost]
+
+    style A fill:#95e1d3
+    style B fill:#95e1d3
+    style C fill:#95e1d3
+    style D fill:#95e1d3
+    style E fill:#4ecdc4
+\`\`\`
+
+---
+
+## 创建第一个模块
+
+我们将创建一个简单的"用户模块"（User Module），演示Bifrost的基本用法。
+
+### 项目结构规划
+
+\`\`\`mermaid
+graph TD
+    subgraph "项目结构"
+        A[YourApp]
+        B[Modules]
+        C[User]
+        D[Mediator]
+        E[Common]
+    end
+
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+
+    style A fill:#4ecdc4
+    style B fill:#95e1d3
+    style C fill:#ffd93d
+    style D fill:#ff6b6b
+    style E fill:#6bcf7f
+\`\`\`
+
+### 步骤1：创建Mediator模块
+
+Mediator模块用于存放所有模块的服务协议。
+
+#### 1.1 在Xcode中创建Mediator文件夹
+
+\`\`\`
+YourApp/
+└── Modules/
+    └── Mediator/
+        └── ModuleService/
+            └── UserModuleService.h
+\`\`\`
+
+#### 1.2 创建UserModuleService.h
+
+\`\`\`objective-c
+//
+//  UserModuleService.h
+//  Mediator
+//
+//  定义用户模块对外提供的服务
+//
+
+#ifndef UserModuleService_h
+#define UserModuleService_h
+
+#import <BifrostHeader.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
+///<v1.0>
+
+#pragma mark - URL routers
+// 定义路由URL常量
+static NSString *const kRouteUserProfile = @"//user/profile";
+static NSString *const kRouteUserProfileParamUserId = @"userId";
+
+#pragma mark - Model Protocols
+// 定义用户数据模型协议
+@protocol UserProtocol <NSObject>
+- (NSString*)userId;
+- (NSString*)userName;
+- (NSString*)avatar;
+@end
+
+#pragma mark - Module Protocol
+// 定义用户模块服务协议
+@protocol UserModuleService <NSObject>
+
+/// 获取当前登录用户
+- (id<UserProtocol> _Nullable)currentUser;
+
+/// 根据用户ID获取用户信息
+- (id<UserProtocol> _Nullable)userById:(NSString*)userId;
+
+/// 用户是否已登录
+- (BOOL)isUserLoggedIn;
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+#endif /* UserModuleService_h */
+\`\`\`
+
+<thinking>
+我需要继续创建用户模块的实现部分。让我继续编写文档，包括：
+1. 创建User模块的实现
+2. 实现UserModule类
+3. 实现UserModel类
+4. 注册模块
+5. 在AppDelegate中初始化
+
+然后我需要展示如何使用Router URL和Remote API。
+</thinking>
+
+### 步骤2：创建User模块实现
+
+#### 2.1 创建User模块文件夹结构
+
+\`\`\`
+YourApp/
+└── Modules/
+    └── User/
+        ├── Module/
+        │   ├── UserModule.h
+        │   └── UserModule.m
+        ├── Model/
+        │   ├── UserModel.h
+        │   └── UserModel.m
+        └── Controller/
+            ├── UserProfileViewController.h
+            └── UserProfileViewController.m
+\`\`\`
+
+#### 2.2 创建UserModel（数据模型）
+
+**UserModel.h**
+\`\`\`objective-c
+//
+//  UserModel.h
+//  User
+//
+//  用户数据模型
+//
+
+#import <Foundation/Foundation.h>
+#import "UserModuleService.h"  // 导入协议
+
+@interface UserModel : NSObject <UserProtocol>
+
+@property (nonatomic, copy) NSString *userId;
+@property (nonatomic, copy) NSString *userName;
+@property (nonatomic, copy) NSString *avatar;
+
+@end
+\`\`\`
+
+**UserModel.m**
+\`\`\`objective-c
+//
+//  UserModel.m
+//  User
+//
+
+#import "UserModel.h"
+
+@implementation UserModel
+
+// UserProtocol协议方法已经通过@property自动实现
+
+@end
+\`\`\`
+
+#### 2.3 创建UserModule（模块入口）
+
+**UserModule.h**
+\`\`\`objective-c
+//
+//  UserModule.h
+//  User
+//
+//  用户模块入口
+//
+
+#import <Foundation/Foundation.h>
+#import <BifrostHeader.h>
+#import "UserModuleService.h"
+
+@interface UserModule : NSObject <BifrostModuleProtocol, UserModuleService>
+
+@end
+\`\`\`
+
+**UserModule.m**
+\`\`\`objective-c
+//
+//  UserModule.m
+//  User
+//
+
+#import "UserModule.h"
+#import "UserModel.h"
+#import "UserProfileViewController.h"
+
+@interface UserModule ()
+@property (nonatomic, strong) UserModel *currentUserModel;
+@end
+
+@implementation UserModule
+
+#pragma mark - 模块注册
+
++ (void)load {
+    // 在+load方法中注册模块
+    BFRegister(UserModuleService);
+
+    // 注册Router URL
+    [self registerRouterURLs];
+}
+
++ (void)registerRouterURLs {
+    // 注册用户资料页面路由
+    [Bifrost bindURL:kRouteUserProfile toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+        // 从URL参数中获取userId
+        NSString *userId = parameters[kRouteUserProfileParamUserId];
+
+        // 创建用户资料页面
+        UserProfileViewController *vc = [[UserProfileViewController alloc] init];
+        vc.userId = userId;
+
+        return vc;
+    }];
+}
+
+#pragma mark - BifrostModuleProtocol
+
++ (instancetype)sharedInstance {
+    static UserModule *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+- (void)setup {
+    NSLog(@"[UserModule] 模块初始化");
+
+    // 模拟加载当前用户数据
+    self.currentUserModel = [[UserModel alloc] init];
+    self.currentUserModel.userId = @"10001";
+    self.currentUserModel.userName = @"张三";
+    self.currentUserModel.avatar = @"https://example.com/avatar.jpg";
+}
+
++ (NSUInteger)priority {
+    return 200;  // 用户模块优先级较高
+}
+
+#pragma mark - UserModuleService
+
+- (id<UserProtocol>)currentUser {
+    return self.currentUserModel;
+}
+
+- (id<UserProtocol>)userById:(NSString *)userId {
+    // 模拟根据ID获取用户
+    UserModel *user = [[UserModel alloc] init];
+    user.userId = userId;
+    user.userName = [NSString stringWithFormat:@"用户_%@", userId];
+    user.avatar = @"https://example.com/avatar.jpg";
+    return user;
+}
+
+- (BOOL)isUserLoggedIn {
+    return self.currentUserModel != nil;
+}
+
+@end
+\`\`\`
+
+#### 2.4 创建UserProfileViewController（用户资料页面）
+
+**UserProfileViewController.h**
+\`\`\`objective-c
+//
+//  UserProfileViewController.h
+//  User
+//
+
+#import <UIKit/UIKit.h>
+
+@interface UserProfileViewController : UIViewController
+
+@property (nonatomic, copy) NSString *userId;
+
+@end
+\`\`\`
+
+**UserProfileViewController.m**
+\`\`\`objective-c
+//
+//  UserProfileViewController.m
+//  User
+//
+
+#import "UserProfileViewController.h"
+#import "UserModuleService.h"
+#import <BifrostHeader.h>
+
+@implementation UserProfileViewController
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    self.view.backgroundColor = [UIColor whiteColor];
+    self.title = @"用户资料";
+
+    // 通过Remote API获取用户信息
+    id<UserProtocol> user = [BFModule(UserModuleService) userById:self.userId];
+
+    // 显示用户信息
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 100, 300, 100)];
+    label.numberOfLines = 0;
+    label.text = [NSString stringWithFormat:@"用户ID: %@\\n用户名: %@",
+                  user.userId, user.userName];
+    [self.view addSubview:label];
+}
+
+@end
+\`\`\`
+
+### 模块创建流程图
+
+\`\`\`mermaid
+graph TD
+    A[1. 创建ModuleService协议] --> B[2. 创建数据模型]
+    B --> C[3. 创建Module类]
+    C --> D[4. 实现BifrostModuleProtocol]
+    D --> E[5. 实现ModuleService协议]
+    E --> F[6. 注册Router URL]
+    F --> G[7. 在+load中注册模块]
+
+    style A fill:#ffd93d
+    style B fill:#95e1d3
+    style C fill:#95e1d3
+    style D fill:#ff6b6b
+    style E fill:#ff6b6b
+    style F fill:#4ecdc4
+    style G fill:#4ecdc4
+\`\`\`
+
+---
+
+## 实现Router URL
+
+Router URL用于页面跳转和简单参数传递。
+
+### 使用场景
+
+\`\`\`mermaid
+graph LR
+    A[首页] -->|点击用户头像| B[跳转到用户资料页]
+    B -->|通过Router URL| C[UserProfileViewController]
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#4ecdc4
+\`\`\`
+
+### 步骤1：定义Router URL常量
+
+在\`UserModuleService.h\`中定义：
+
+\`\`\`objective-c
+#pragma mark - URL routers
+static NSString *const kRouteUserProfile = @"//user/profile";
+static NSString *const kRouteUserProfileParamUserId = @"userId";
+\`\`\`
+
+### 步骤2：绑定URL Handler
+
+在\`UserModule.m\`的\`+load\`方法中绑定：
+
+\`\`\`objective-c
++ (void)registerRouterURLs {
+    [Bifrost bindURL:kRouteUserProfile toHandler:^id _Nullable(NSDictionary * _Nullable parameters) {
+        // 1. 从参数中获取userId
+        NSString *userId = parameters[kRouteUserProfileParamUserId];
+
+        // 2. 创建ViewController
+        UserProfileViewController *vc = [[UserProfileViewController alloc] init];
+        vc.userId = userId;
+
+        // 3. 返回ViewController
+        return vc;
+    }];
+}
+\`\`\`
+
+### 步骤3：调用Router URL
+
+在其他模块中使用：
+
+\`\`\`objective-c
+// 在HomeViewController.m中
+
+#import "UserModuleService.h"  // 导入协议，获取URL常量
+
+- (void)showUserProfile {
+    // 方式1：使用URL常量（推荐）
+    NSString *url = [NSString stringWithFormat:@"%@?%@=%@",
+                     kRouteUserProfile,
+                     kRouteUserProfileParamUserId,
+                     @"10001"];
+
+    // 方式2：使用BFStr宏（更简洁）
+    NSString *url = BFStr(@"%@?%@=%@",
+                          kRouteUserProfile,
+                          kRouteUserProfileParamUserId,
+                          @"10001");
+
+    // 调用Bifrost处理URL
+    UIViewController *vc = [Bifrost handleURL:url];
+
+    // 跳转页面
+    if (vc) {
+        [self.navigationController pushViewController:vc animated:YES];
+    }
+}
+\`\`\`
+
+### Router URL工作流程
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Home as HomeViewController
+    participant Bifrost as Bifrost
+    participant Handler as URL Handler
+    participant VC as UserProfileViewController
+
+    Home->>Bifrost: handleURL:@"//user/profile?userId=10001"
+    Bifrost->>Bifrost: 解析URL<br/>提取参数{userId: "10001"}
+    Bifrost->>Handler: 调用绑定的Handler Block
+    Handler->>VC: 创建UserProfileViewController
+    Handler->>Handler: 设置vc.userId = "10001"
+    VC->>Handler: 返回VC实例
+    Handler->>Bifrost: 返回VC
+    Bifrost->>Home: 返回VC
+    Home->>Home: pushViewController
+\`\`\`
+
+---
+
+## 实现Remote API
+
+Remote API用于模块间的数据交互和方法调用。
+
+### 使用场景
+
+\`\`\`mermaid
+graph LR
+    A[购物车模块] -->|需要显示用户名| B[调用UserModuleService]
+    B -->|获取用户信息| C[UserModule]
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#4ecdc4
+\`\`\`
+
+### 步骤1：定义Service协议
+
+在\`UserModuleService.h\`中定义：
+
+\`\`\`objective-c
+#pragma mark - Module Protocol
+@protocol UserModuleService <NSObject>
+
+- (id<UserProtocol>)currentUser;
+- (id<UserProtocol>)userById:(NSString*)userId;
+- (BOOL)isUserLoggedIn;
+
+@end
+\`\`\`
+
+### 步骤2：实现Service协议
+
+在\`UserModule.m\`中实现：
+
+\`\`\`objective-c
+#pragma mark - UserModuleService
+
+- (id<UserProtocol>)currentUser {
+    return self.currentUserModel;
+}
+
+- (id<UserProtocol>)userById:(NSString *)userId {
+    UserModel *user = [[UserModel alloc] init];
+    user.userId = userId;
+    user.userName = [NSString stringWithFormat:@"用户_%@", userId];
+    return user;
+}
+
+- (BOOL)isUserLoggedIn {
+    return self.currentUserModel != nil;
+}
+\`\`\`
+
+### 步骤3：调用Remote API
+
+在其他模块中使用：
+
+\`\`\`objective-c
+// 在ShoppingCartViewController.m中
+
+#import "UserModuleService.h"  // 导入协议
+
+- (void)showUserInfo {
+    // 1. 获取用户模块实例
+    id<UserModuleService> userModule = BFModule(UserModuleService);
+
+    // 2. 检查用户是否登录
+    if ([userModule isUserLoggedIn]) {
+        // 3. 获取当前用户信息
+        id<UserProtocol> user = [userModule currentUser];
+
+        // 4. 使用用户信息
+        NSLog(@"当前用户：%@", user.userName);
+        self.userNameLabel.text = user.userName;
+    } else {
+        NSLog(@"用户未登录");
+    }
+}
+
+- (void)loadUserById:(NSString*)userId {
+    // 根据ID获取用户信息
+    id<UserProtocol> user = [BFModule(UserModuleService) userById:userId];
+    NSLog(@"用户名：%@", user.userName);
+}
+\`\`\`
+
+### Remote API工作流程
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Cart as ShoppingCartViewController
+    participant Bifrost as Bifrost
+    participant Module as UserModule
+
+    Cart->>Bifrost: BFModule(UserModuleService)
+    Bifrost->>Bifrost: 查找注册表<br/>UserModuleService -> UserModule
+    Bifrost->>Module: [UserModule sharedInstance]
+    Module->>Bifrost: 返回单例实例
+    Bifrost->>Cart: 返回实例（id<UserModuleService>）
+
+    Cart->>Module: [userModule currentUser]
+    Module->>Module: 返回self.currentUserModel
+    Module->>Cart: 返回用户数据（id<UserProtocol>）
+
+    Cart->>Cart: 使用user.userName等属性
+\`\`\`
+
+---
+
+## 完整示例
+
+### 在AppDelegate中初始化
+
+\`\`\`objective-c
+//
+//  AppDelegate.m
+//
+
+#import "AppDelegate.h"
+#import <BifrostHeader.h>
+
+@implementation AppDelegate
+
+- (BOOL)application:(UIApplication *)application
+    willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    // 初始化所有已注册的模块
+    [Bifrost setupAllModules];
+
+    return YES;
+}
+
+- (BOOL)application:(UIApplication *)application
+    didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    // 创建窗口
+    self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
+
+    // 创建首页
+    UIViewController *homeVC = [[UIViewController alloc] init];
+    homeVC.view.backgroundColor = [UIColor whiteColor];
+    homeVC.title = @"首页";
+
+    // 添加测试按钮
+    [self addTestButtonsToViewController:homeVC];
+
+    // 设置导航控制器
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:homeVC];
+    self.window.rootViewController = nav;
+
+    [self.window makeKeyAndVisible];
+
+    return YES;
+}
+
+- (void)addTestButtonsToViewController:(UIViewController*)vc {
+    // 测试Router URL按钮
+    UIButton *routerButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    routerButton.frame = CGRectMake(50, 150, 300, 50);
+    [routerButton setTitle:@"测试Router URL跳转" forState:UIControlStateNormal];
+    [routerButton addTarget:self
+                     action:@selector(testRouterURL)
+           forControlEvents:UIControlEventTouchUpInside];
+    [vc.view addSubview:routerButton];
+
+    // 测试Remote API按钮
+    UIButton *apiButton = [UIButton buttonWithType:UIButtonTypeSystem];
+    apiButton.frame = CGRectMake(50, 220, 300, 50);
+    [apiButton setTitle:@"测试Remote API" forState:UIControlStateNormal];
+    [apiButton addTarget:self
+                  action:@selector(testRemoteAPI)
+        forControlEvents:UIControlEventTouchUpInside];
+    [vc.view addSubview:apiButton];
+}
+
+- (void)testRouterURL {
+    NSLog(@"=== 测试Router URL ===");
+
+    // 使用Router URL跳转到用户资料页
+    NSString *url = BFStr(@"%@?%@=%@",
+                          kRouteUserProfile,
+                          kRouteUserProfileParamUserId,
+                          @"10001");
+
+    UIViewController *vc = [Bifrost handleURL:url];
+
+    if (vc) {
+        UINavigationController *nav = (UINavigationController*)self.window.rootViewController;
+        [nav pushViewController:vc animated:YES];
+        NSLog(@"✅ Router URL跳转成功");
+    } else {
+        NSLog(@"❌ Router URL跳转失败");
+    }
+}
+
+- (void)testRemoteAPI {
+    NSLog(@"=== 测试Remote API ===");
+
+    // 获取用户模块
+    id<UserModuleService> userModule = BFModule(UserModuleService);
+
+    // 测试1：检查登录状态
+    BOOL isLoggedIn = [userModule isUserLoggedIn];
+    NSLog(@"用户登录状态: %@", isLoggedIn ? @"已登录" : @"未登录");
+
+    // 测试2：获取当前用户
+    id<UserProtocol> currentUser = [userModule currentUser];
+    NSLog(@"当前用户: ID=%@, 名称=%@", currentUser.userId, currentUser.userName);
+
+    // 测试3：根据ID获取用户
+    id<UserProtocol> user = [userModule userById:@"20002"];
+    NSLog(@"查询用户: ID=%@, 名称=%@", user.userId, user.userName);
+
+    // 显示提示
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"测试完成"
+                                                                   message:@"请查看控制台输出"
+                                                            preferredStyle:UIAlertControllerStyleAlert];
+    [alert addAction:[UIAlertAction actionWithTitle:@"确定"
+                                              style:UIAlertActionStyleDefault
+                                            handler:nil]];
+
+    UINavigationController *nav = (UINavigationController*)self.window.rootViewController;
+    [nav.topViewController presentViewController:alert animated:YES completion:nil];
+}
+
+@end
+\`\`\`
+
+### 完整流程图
+
+\`\`\`mermaid
+graph TD
+    A[App启动] --> B[执行+load方法]
+    B --> C[BFRegister注册模块]
+    B --> D[bindURL注册路由]
+
+    E[AppDelegate] --> F[setupAllModules]
+    F --> G[初始化所有模块]
+    G --> H[调用setup方法]
+
+    I[用户操作] --> J{选择功能}
+    J -->|页面跳转| K[handleURL]
+    J -->|数据获取| L[BFModule]
+
+    K --> M[返回ViewController]
+    L --> N[返回数据]
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#ffd93d
+    style D fill:#ffd93d
+    style E fill:#4ecdc4
+    style F fill:#4ecdc4
+    style G fill:#4ecdc4
+    style H fill:#4ecdc4
+    style I fill:#95e1d3
+    style J fill:#ff6b6b
+    style K fill:#6bcf7f
+    style L fill:#6bcf7f
+\`\`\`
+
+---
+
+## 运行和测试
+
+### 1. 编译项目
+
+在Xcode中按\`Cmd+B\`编译项目，确保没有错误。
+
+### 2. 运行项目
+
+按\`Cmd+R\`运行项目。
+
+### 3. 测试功能
+
+- 点击"测试Router URL跳转"按钮，应该跳转到用户资料页
+- 点击"测试Remote API"按钮，查看控制台输出用户信息
+
+### 预期输出
+
+\`\`\`
+[UserModule] 模块初始化
+=== 测试Remote API ===
+用户登录状态: 已登录
+当前用户: ID=10001, 名称=张三
+查询用户: ID=20002, 名称=用户_20002
+\`\`\`
+
+---
+
+## 常见问题
+
+### Q1: 编译错误：找不到BifrostHeader.h
+
+**原因：** 没有正确安装Bifrost或没有使用.xcworkspace文件
+
+**解决：**
+\`\`\`bash
+pod install
+open YourApp.xcworkspace  # 必须打开.xcworkspace
+\`\`\`
+
+### Q2: Router URL返回nil
+
+**原因：** URL没有正确注册或URL格式错误
+
+**解决：**
+1. 检查\`+load\`方法中是否调用了\`bindURL\`
+2. 检查URL格式是否正确（如：\`//user/profile\`）
+3. 在\`bindURL\`的handler中添加断点，检查是否被调用
+
+### Q3: BFModule返回nil
+
+**原因：** 模块没有正确注册
+
+**解决：**
+1. 检查\`+load\`方法中是否调用了\`BFRegister\`
+2. 检查\`AppDelegate\`中是否调用了\`[Bifrost setupAllModules]\`
+3. 检查模块类是否实现了\`BifrostModuleProtocol\`
+
+---
+
+## 小结
+
+恭喜！你已经完成了第一个Bifrost模块的开发。
+
+本章你学会了：
+
+1. ✅ 安装Bifrost
+2. ✅ 创建ModuleService协议
+3. ✅ 实现Module类
+4. ✅ 注册Router URL
+5. ✅ 实现Remote API
+6. ✅ 在AppDelegate中初始化
+
+---
+
+## 下一步
+
+现在你已经掌握了Bifrost的基本用法。
+
+在下一章节中，我们将深入学习Router URL系统：
+- URL参数传递
+- 复杂参数传递
+- Completion回调
+- URL拦截和处理
+
+👉 [下一章：路由系统详解](04-路由系统详解.html)
+`;
+
+        // 渲染
+        const contentEl = document.getElementById('content');
+        contentEl.innerHTML = marked.parse(markdown);
+
+        // === 调试代码 ===
+        // 显示所有生成的ID
+        setTimeout(() => {
+            console.log('=== 生成的标题ID ===');
+            contentEl.querySelectorAll('h1[id], h2[id], h3[id], h4[id]').forEach(h => {
+                console.log(`${h.tagName} id="${h.id}" text="${h.textContent}"`);
+            });
+
+            console.log('\n=== 链接的锚点 ===');
+            contentEl.querySelectorAll('a[href^="#"]').forEach(a => {
+                const href = a.getAttribute('href');
+                const target = document.getElementById(href.substring(1));
+                console.log(`${href} -> ${target ? '✅找到' : '❌未找到'} (${a.textContent})`);
+            });
+        }, 200);
+
+        // 处理Mermaid图表
+        const mermaidBlocks = contentEl.querySelectorAll('pre code.language-mermaid');
+        mermaidBlocks.forEach((block, index) => {
+            const pre = block.parentElement;
+            const code = block.textContent;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code;
+            pre.replaceWith(div);
+        });
+
+        // 渲染Mermaid
+        mermaid.run();
+
+        // 修复锚点跳转 - 考虑固定头部的高度
+        function scrollToAnchor(target) {
+            const headerOffset = 80;
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+
+        // 处理所有锚点链接点击
+        contentEl.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href^="#"]');
+            if (link) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // 关键修复：解码URL编码的锚点
+                const rawHash = link.getAttribute('href').substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const target = document.getElementById(hash);
+
+                console.log('🖱️ 点击链接:', link.textContent);
+                console.log('📍 原始锚点:', rawHash);
+                console.log('📍 解码后:', hash);
+                console.log('🎯 目标:', target);
+
+                if (target) {
+                    scrollToAnchor(target);
+                    history.pushState(null, null, '#' + hash);
+                } else {
+                    console.error('❌ 未找到ID:', hash);
+                }
+
+                return false;
+            }
+        }, true);
+
+        // 回到顶部
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('show', window.pageYOffset > 300);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 页面加载时处理URL中的锚点
+        if (window.location.hash) {
+            setTimeout(() => {
+                const rawHash = window.location.hash.substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const element = document.getElementById(hash);
+                if (element) {
+                    scrollToAnchor(element);
+                }
+            }, 200);
+        }
+    </script>
+</body>
+</html>
