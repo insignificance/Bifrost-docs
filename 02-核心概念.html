@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="业务模块、代码依赖、三层架构">
+    <title>第2章 核心概念 - Bifrost文档</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.0/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10.6.0/dist/mermaid.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #0366d6;
+            --primary-dark: #0256c7;
+            --bg-color: #f6f8fa;
+            --text-color: #24292e;
+            --border-color: #e1e4e8;
+            --sidebar-width: 280px;
+            --header-height: 60px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.7;
+            color: var(--text-color);
+            background: var(--bg-color);
+        }
+
+        /* 顶部栏 */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--header-height);
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .breadcrumb {
+            font-size: 0.9rem;
+            color: #586069;
+        }
+
+        .breadcrumb a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: var(--header-height);
+            width: var(--sidebar-width);
+            height: calc(100vh - var(--header-height));
+            background: white;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            z-index: 50;
+        }
+
+        .sidebar-content {
+            padding: 2rem 1.5rem;
+        }
+
+        .sidebar h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #586069;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-nav {
+            list-style: none;
+        }
+
+        .doc-nav li {
+            margin: 0.3rem 0;
+        }
+
+        .doc-nav a {
+            display: block;
+            padding: 0.6rem 1rem;
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .doc-nav a:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .doc-nav a.active {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        /* 主内容区 */
+        .main {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 3rem;
+        }
+
+        .content-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Markdown内容样式 */
+        .markdown-body {
+            font-size: 16px;
+        }
+
+        .markdown-body h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .markdown-body h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .markdown-body h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .markdown-body h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: #586069;
+        }
+
+        .markdown-body p {
+            margin: 1.2rem 0;
+            line-height: 1.8;
+        }
+
+        .markdown-body ul, .markdown-body ol {
+            margin: 1.2rem 0;
+            padding-left: 2rem;
+        }
+
+        .markdown-body li {
+            margin: 0.5rem 0;
+            line-height: 1.7;
+        }
+
+        .markdown-body a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .markdown-body a:hover {
+            text-decoration: underline;
+        }
+
+        .markdown-body code {
+            background: #f6f8fa;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, Consolas, monospace;
+            font-size: 0.9em;
+            color: #e83e8c;
+        }
+
+        .markdown-body pre {
+            background: #f6f8fa;
+            padding: 1.2rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .markdown-body pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+            font-size: 0.9rem;
+        }
+
+        .markdown-body table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1.5rem 0;
+        }
+
+        .markdown-body th, .markdown-body td {
+            border: 1px solid var(--border-color);
+            padding: 0.8rem 1rem;
+            text-align: left;
+        }
+
+        .markdown-body th {
+            background: var(--bg-color);
+            font-weight: 600;
+        }
+
+        .markdown-body tr:hover {
+            background: #fafbfc;
+        }
+
+        .markdown-body blockquote {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            background: #f6f8fa;
+            border-left: 4px solid var(--primary-color);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .markdown-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            margin: 1.5rem 0;
+        }
+
+        /* Mermaid图表 */
+        .mermaid {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        /* 页面导航 */
+        .page-navigation {
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .nav-btn {
+            flex: 1;
+            max-width: 45%;
+            padding: 1.5rem;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--bg-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(3,102,214,0.1);
+        }
+
+        .nav-btn.prev {
+            justify-content: flex-start;
+        }
+
+        .nav-btn.next {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .nav-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .nav-text {
+            margin: 0 1rem;
+        }
+
+        .nav-label {
+            font-size: 0.8rem;
+            color: #586069;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.3rem;
+        }
+
+        .nav-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        /* 回到顶部 */
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .back-to-top:hover {
+            background: var(--primary-dark);
+            transform: translateY(-3px);
+        }
+
+        .back-to-top.show {
+            display: flex;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main {
+                margin-left: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0 1rem;
+            }
+            .main {
+                padding: 1.5rem;
+            }
+            .content-wrapper {
+                padding: 1.5rem;
+            }
+            .markdown-body h1 {
+                font-size: 2rem;
+            }
+            .page-navigation {
+                flex-direction: column;
+            }
+            .nav-btn {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span>📚</span>
+                <span>Bifrost 文档</span>
+            </a>
+            <div class="breadcrumb">
+                <a href="index.html">首页</a> / 第2章 核心概念
+            </div>
+        </div>
+    </header>
+
+    <nav class="sidebar"><div class="sidebar-content"><h3>📖 文档目录</h3><ul class="doc-nav"><li><a href="README.html">📚 文档导航</a></li><li><a href="01-什么是Bifrost.html">🎯 第1章 什么是Bifrost</a></li><li><a href="02-核心概念.html" class="active">💡 第2章 核心概念</a></li><li><a href="03-快速开始.html">🚀 第3章 快速开始</a></li><li><a href="04-路由系统详解.html">🗺️ 第4章 路由系统详解</a></li><li><a href="05-远程API详解.html">🔌 第5章 远程API详解</a></li><li><a href="06-模块开发指南.html">⚙️ 第6章 模块开发指南</a></li><li><a href="07-最佳实践.html">✨ 第7章 最佳实践</a></li><li><a href="08-Demo项目解析.html">🎓 第8章 Demo项目解析</a></li></ul></div></nav>
+
+    <main class="main">
+        <div class="content-wrapper">
+            <article class="markdown-body" id="content"></article>
+            <nav class="page-navigation">
+                
+            <a href="01-什么是Bifrost.html" class="nav-btn prev">
+                <span class="nav-icon">←</span>
+                <div class="nav-text">
+                    <div class="nav-label">上一章</div>
+                    <div class="nav-title">第1章 什么是Bifrost</div>
+                </div>
+            </a>
+            
+                
+            <a href="03-快速开始.html" class="nav-btn next">
+                <div class="nav-text">
+                    <div class="nav-label">下一章</div>
+                    <div class="nav-title">第3章 快速开始</div>
+                </div>
+                <span class="nav-icon">→</span>
+            </a>
+            
+            </nav>
+        </div>
+    </main>
+
+    <div class="back-to-top" id="backToTop">↑</div>
+
+    <script>
+        // 初始化Mermaid
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'default',
+            securityLevel: 'loose',
+        });
+
+        // 自定义渲染器 - 修复中文锚点问题
+        const renderer = new marked.Renderer();
+
+        // 覆盖heading渲染，使用与GitHub Markdown完全一致的ID生成规则
+        renderer.heading = function(text, level, raw) {
+            // 移除HTML标签
+            const plainText = text.replace(/<[^>]+>/g, '');
+
+            // 生成ID，完全匹配GitHub Markdown规则
+            const id = plainText
+                .toLowerCase()
+                // 移除emoji（使用正确的Unicode范围）
+                .replace(/[\u{1F300}-\u{1F9FF}]/gu, '')
+                .replace(/[\u{2600}-\u{26FF}]/gu, '')
+                .replace(/[\u{2700}-\u{27BF}]/gu, '')
+                // 移除中英文标点符号
+                .replace(/[：？。！，、；""''（）《》【】·…—]/g, '')
+                .replace(/[?.,;!'"()\[\]<>{}]/g, '')
+                // 空格替换为-
+                .replace(/\s+/g, '-')
+                // 多个-合并为一个
+                .replace(/-+/g, '-')
+                // 去掉首尾的-
+                .replace(/^-|-$/g, '')
+                .trim();
+
+            return `<h${level} id="${id}">${text}</h${level}>`;
+        };
+
+        // 配置marked
+        marked.setOptions({
+            renderer: renderer,
+            breaks: true,
+            gfm: true,
+            headerIds: true,
+            mangle: false,
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            }
+        });
+
+        // Markdown内容
+        const markdown = `# 02 - 核心概念
+
+## 📖 目录
+- [业务模块 vs 功能模块](#业务模块-vs-功能模块)
+- [代码依赖 vs 业务依赖](#代码依赖-vs-业务依赖)
+- [Bifrost三层架构](#bifrost三层架构)
+- [模块协议：BifrostModuleProtocol](#模块协议bifrostmoduleprotocol)
+- [模块注册机制](#模块注册机制)
+- [两种通信方式](#两种通信方式)
+
+---
+
+## 业务模块 vs 功能模块
+
+在开始使用Bifrost之前，我们需要理解两个重要概念：**业务模块**和**功能模块**。
+
+### 功能模块（Function Module）
+
+**定义：** 提供通用功能的代码库，不包含具体业务逻辑。
+
+\`\`\`mermaid
+graph LR
+    subgraph "功能模块示例"
+        A[AFNetworking<br/>网络请求]
+        B[SDWebImage<br/>图片加载]
+        C[Masonry<br/>布局]
+        D[YYModel<br/>数据模型]
+    end
+
+    style A fill:#a8dadc
+    style B fill:#a8dadc
+    style C fill:#a8dadc
+    style D fill:#a8dadc
+\`\`\`
+
+**特点：**
+- ✅ 可以在任何App中使用
+- ✅ 提供大量公开API
+- ✅ 通过直接import头文件使用
+- ✅ 不包含业务逻辑
+
+**使用方式：**
+\`\`\`objective-c
+// 直接import功能模块的头文件
+#import <AFNetworking/AFNetworking.h>
+#import <SDWebImage/UIImageView+WebCache.h>
+
+// 直接调用API
+[imageView sd_setImageWithURL:url];
+\`\`\`
+
+### 业务模块（Business Module）
+
+**定义：** 包含具体业务逻辑的模块，只能在特定App中使用。
+
+\`\`\`mermaid
+graph LR
+    subgraph "业务模块示例（电商App）"
+        A[商品模块<br/>Goods]
+        B[订单模块<br/>Order]
+        C[购物车模块<br/>Cart]
+        D[用户模块<br/>User]
+    end
+
+    style A fill:#ffd93d
+    style B fill:#ffd93d
+    style C fill:#ffd93d
+    style D fill:#ffd93d
+\`\`\`
+
+**特点：**
+- ⚠️ 只能在特定App中使用（如电商App）
+- ⚠️ 只暴露少量API给其他模块
+- ⚠️ 不能直接import其他业务模块
+- ⚠️ 包含大量业务逻辑
+
+**传统方式的问题：**
+\`\`\`objective-c
+// ❌ 错误：业务模块不应该直接import其他业务模块
+#import "GoodsDetailViewController.h"
+#import "ShoppingCartManager.h"
+
+// 这会导致代码耦合
+\`\`\`
+
+**Bifrost方式：**
+\`\`\`objective-c
+// ✅ 正确：通过Bifrost通信
+UIViewController *vc = [Bifrost handleURL:@"//goods/detail?id=123"];
+id<GoodsProtocol> goods = [BFModule(GoodsModuleService) goodsById:@"123"];
+\`\`\`
+
+### 对比总结
+
+| 特性 | 功能模块 | 业务模块 |
+|------|---------|---------|
+| **通用性** | 可用于任何App | 只能用于特定App |
+| **API数量** | 大量公开API | 少量对外接口 |
+| **使用方式** | 直接import | 通过Bifrost通信 |
+| **业务逻辑** | 无业务逻辑 | 包含业务逻辑 |
+| **依赖方式** | 代码依赖 | 业务依赖（通过Bifrost） |
+
+---
+
+## 代码依赖 vs 业务依赖
+
+理解这两种依赖的区别是掌握Bifrost的关键。
+
+### 代码依赖（Code Dependency）
+
+**定义：** A模块必须import B模块的头文件才能编译通过。
+
+\`\`\`mermaid
+graph LR
+    A[购物车模块] -->|#import GoodsModel.h| B[商品模块]
+
+    style A fill:#ff6b6b
+    style B fill:#ff6b6b
+
+    classDef bad fill:#ff6b6b,stroke:#c92a2a
+\`\`\`
+
+**示例：**
+\`\`\`objective-c
+// 在 ShoppingCartViewController.m 中
+#import "GoodsModel.h"  // 代码依赖
+
+@implementation ShoppingCartViewController
+
+- (void)showGoodsDetail {
+    GoodsModel *goods = [[GoodsModel alloc] init];  // 必须有GoodsModel.h才能编译
+    // ...
+}
+
+@end
+\`\`\`
+
+**问题：**
+- 🔴 如果商品模块代码有错误，购物车模块也无法编译
+- 🔴 必须同时拥有两个模块的代码才能开发
+- 🔴 形成强耦合，难以维护
+
+### 业务依赖（Business Dependency）
+
+**定义：** A模块的业务逻辑需要B模块提供的功能，但不需要import B模块的代码。
+
+\`\`\`mermaid
+graph LR
+    A[购物车模块] -.->|业务需要商品信息| B[商品模块]
+    A -->|代码依赖| M[Mediator]
+    B -->|代码依赖| M
+
+    style A fill:#95e1d3
+    style B fill:#95e1d3
+    style M fill:#ffd93d
+\`\`\`
+
+**示例：**
+\`\`\`objective-c
+// 在 ShoppingCartViewController.m 中
+#import "GoodsModuleService.h"  // 只import协议，不import具体实现
+
+@implementation ShoppingCartViewController
+
+- (void)showGoodsDetail {
+    // 通过协议获取商品信息，不需要知道GoodsModel的具体实现
+    id<GoodsProtocol> goods = [BFModule(GoodsModuleService) goodsById:@"123"];
+    NSLog(@"%@", goods.name);  // 使用协议定义的方法
+}
+
+@end
+\`\`\`
+
+**优势：**
+- ✅ 购物车模块可以独立编译（即使商品模块有错误）
+- ✅ 只需要协议定义，不需要具体实现
+- ✅ 松耦合，易于维护
+
+### Bifrost的目标
+
+\`\`\`mermaid
+graph TD
+    A[传统方式] -->|代码依赖 + 业务依赖| B[强耦合]
+    C[Bifrost方式] -->|只有业务依赖| D[松耦合]
+
+    style A fill:#ff6b6b
+    style B fill:#ff6b6b
+    style C fill:#95e1d3
+    style D fill:#95e1d3
+\`\`\`
+
+**核心理念：** 消除代码依赖，保留业务依赖
+
+---
+
+## Bifrost三层架构
+
+Bifrost采用三层架构设计，每一层都有明确的职责。
+
+### 架构全景图
+
+\`\`\`mermaid
+graph TB
+    subgraph "第一层：业务模块层（Business Modules）"
+        A[首页模块<br/>Home]
+        B[商品模块<br/>Goods]
+        C[购物车模块<br/>Cart]
+        D[订单模块<br/>Order]
+    end
+
+    subgraph "第二层：中介层（Mediator）"
+        M1[HomeModuleService.h]
+        M2[GoodsModuleService.h]
+        M3[CartModuleService.h]
+        M4[OrderModuleService.h]
+    end
+
+    subgraph "第三层：公共层（Common + Bifrost）"
+        COM[Common<br/>公共组件]
+        BF[Bifrost<br/>核心库]
+    end
+
+    A -.->|实现| M1
+    B -.->|实现| M2
+    C -.->|实现| M3
+    D -.->|实现| M4
+
+    A -->|依赖| M2
+    A -->|依赖| M3
+    C -->|依赖| M2
+
+    A --> COM
+    B --> COM
+    C --> COM
+    D --> COM
+
+    COM --> BF
+    M1 --> BF
+    M2 --> BF
+    M3 --> BF
+    M4 --> BF
+
+    style A fill:#95e1d3
+    style B fill:#95e1d3
+    style C fill:#95e1d3
+    style D fill:#95e1d3
+    style M1 fill:#ffd93d
+    style M2 fill:#ffd93d
+    style M3 fill:#ffd93d
+    style M4 fill:#ffd93d
+    style COM fill:#6bcf7f
+    style BF fill:#4ecdc4
+\`\`\`
+
+### 第一层：业务模块层
+
+**职责：** 实现具体的业务逻辑
+
+**特点：**
+- 每个业务模块是独立的
+- 模块之间没有直接依赖
+- 每个模块包含两个target：
+  - **代码target**：静态库（.a）
+  - **资源target**：资源包（.bundle）
+
+**模块结构示例：**
+\`\`\`
+Goods/                          # 商品模块
+├── Goods/                      # 代码target
+│   ├── Module/                 # 模块入口
+│   │   ├── GoodsModule.h       # 模块类
+│   │   └── GoodsModule.m
+│   ├── Feature/                # 功能实现
+│   │   ├── GoodsList/          # 商品列表
+│   │   └── GoodsDetail/        # 商品详情
+│   └── Common/                 # 模块内公共代码
+└── GoodsBundle/                # 资源target
+    └── Resource/               # 图片、音频等资源
+\`\`\`
+
+### 第二层：中介层（Mediator）
+
+**职责：** 定义模块之间的通信协议
+
+**特点：**
+- 包含所有业务模块的\`*ModuleService.h\`文件
+- 只有协议定义，没有具体实现
+- 所有业务模块都依赖Mediator
+
+**ModuleService文件结构：**
+\`\`\`objective-c
+// GoodsModuleService.h
+
+#pragma mark - URL routers
+// 定义路由URL常量
+static NSString *const kRouteGoodsDetail = @"//goods/detail";
+
+#pragma mark - Model Protocols
+// 定义数据模型协议
+@protocol GoodsProtocol <NSObject>
+- (NSString*)goodsId;
+- (NSString*)name;
+- (CGFloat)price;
+@end
+
+#pragma mark - Module Protocol
+// 定义模块服务协议
+@protocol GoodsModuleService <NSObject>
+- (NSArray<id<GoodsProtocol>>*)allGoodsList;
+- (id<GoodsProtocol>)goodsById:(NSString*)goodsId;
+@end
+\`\`\`
+
+**为什么需要Mediator？**
+
+\`\`\`mermaid
+sequenceDiagram
+    participant Cart as 购物车模块
+    participant Mediator as Mediator
+    participant Goods as 商品模块
+
+    Note over Cart: 需要获取商品信息
+    Cart->>Mediator: 1. import GoodsModuleService.h
+    Note over Cart: 看到协议定义
+    Cart->>Goods: 2. 通过Bifrost调用
+    Goods->>Cart: 3. 返回商品数据
+
+    Note over Cart,Goods: 购物车只依赖协议，不依赖商品模块代码
+\`\`\`
+
+### 第三层：公共层
+
+包含两个部分：
+
+#### Common（公共组件）
+
+**职责：** 提供所有模块共用的功能
+
+**包含内容：**
+- 第三方库（AFNetworking、YYModel等）
+- 公共UI组件
+- 工具类
+- 基础数据模型
+
+#### Bifrost（核心库）
+
+**职责：** 提供模块通信能力
+
+**核心功能：**
+- 模块注册与管理
+- Router URL路由
+- Remote API调用
+- 异常处理
+
+---
+
+## 模块协议：BifrostModuleProtocol
+
+每个业务模块都必须实现\`BifrostModuleProtocol\`协议。
+
+### 协议定义
+
+\`\`\`objective-c
+@protocol BifrostModuleProtocol <UIApplicationDelegate, NSObject>
+
+@required
+// 必须实现：单例方法
++ (instancetype)sharedInstance;
+
+// 必须实现：模块初始化方法
+- (void)setup;
+
+@optional
+// 可选：模块优先级（默认100）
++ (NSUInteger)priority;
+
+// 可选：是否同步初始化（默认NO）
++ (BOOL)setupModuleSynchronously;
+
+@end
+\`\`\`
+
+### 协议方法详解
+
+\`\`\`mermaid
+graph TD
+    A[BifrostModuleProtocol] --> B[必须实现]
+    A --> C[可选实现]
+
+    B --> B1[+sharedInstance<br/>单例方法]
+    B --> B2[-setup<br/>初始化方法]
+
+    C --> C1[+priority<br/>优先级]
+    C --> C2[+setupModuleSynchronously<br/>同步初始化]
+
+    style A fill:#4ecdc4
+    style B fill:#ff6b6b
+    style C fill:#ffd93d
+\`\`\`
+
+#### 1. sharedInstance（必须实现）
+
+**作用：** 返回模块的单例实例
+
+**实现示例：**
+\`\`\`objective-c
++ (instancetype)sharedInstance {
+    static GoodsModule *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+\`\`\`
+
+#### 2. setup（必须实现）
+
+**作用：** 模块初始化，在App启动时被调用
+
+**实现示例：**
+\`\`\`objective-c
+- (void)setup {
+    // 初始化模块
+    [[GoodsManager sharedInstance] setup];
+
+    // 注册通知
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(handleNotification:)
+                                                 name:@"SomeNotification"
+                                               object:nil];
+}
+\`\`\`
+
+**注意：** 默认在后台线程异步执行，避免阻塞App启动
+
+#### 3. priority（可选实现）
+
+**作用：** 控制模块初始化顺序，数字越大优先级越高
+
+**实现示例：**
+\`\`\`objective-c
++ (NSUInteger)priority {
+    return 200;  // 默认是100
+}
+\`\`\`
+
+**使用场景：**
+- 用户模块需要最先初始化（priority = 200）
+- 其他模块依赖用户信息（priority = 100）
+
+#### 4. setupModuleSynchronously（可选实现）
+
+**作用：** 控制是否在主线程同步初始化
+
+**实现示例：**
+\`\`\`objective-c
++ (BOOL)setupModuleSynchronously {
+    return YES;  // 在主线程同步初始化
+}
+\`\`\`
+
+**使用场景：**
+- 模块初始化必须在主线程（如UI相关）
+- 模块初始化必须在其他模块之前完成
+
+---
+
+## 模块注册机制
+
+### 注册流程
+
+\`\`\`mermaid
+sequenceDiagram
+    participant App as App启动
+    participant Load as +load方法
+    participant Bifrost as Bifrost
+    participant Module as 模块实例
+
+    App->>Load: 1. 执行所有+load方法
+    Load->>Bifrost: 2. BFRegister(GoodsModuleService)
+    Note over Bifrost: 记录：GoodsModuleService -> GoodsModule
+
+    App->>Bifrost: 3. [Bifrost setupAllModules]
+    Bifrost->>Module: 4. [[GoodsModule sharedInstance] setup]
+    Note over Module: 模块初始化完成
+
+    Note over App,Module: 现在可以使用模块了
+\`\`\`
+
+### 注册代码示例
+
+\`\`\`objective-c
+// GoodsModule.m
+
+@implementation GoodsModule
+
+// 步骤1：在+load方法中注册
++ (void)load {
+    BFRegister(GoodsModuleService);
+    // 展开后：[Bifrost registerService:@protocol(GoodsModuleService)
+    //                        withModule:self.class];
+}
+
+// 步骤2：实现单例方法
++ (instancetype)sharedInstance {
+    static GoodsModule *instance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        instance = [[self alloc] init];
+    });
+    return instance;
+}
+
+// 步骤3：实现setup方法
+- (void)setup {
+    NSLog(@"商品模块初始化");
+}
+
+// 步骤4：实现ModuleService协议的方法
+- (NSArray<id<GoodsProtocol>>*)allGoodsList {
+    // 返回商品列表
+    return @[];
+}
+
+@end
+\`\`\`
+
+### 在AppDelegate中初始化
+
+\`\`\`objective-c
+// AppDelegate.m
+
+- (BOOL)application:(UIApplication *)application
+    willFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+
+    // 初始化所有已注册的模块
+    [Bifrost setupAllModules];
+
+    return YES;
+}
+\`\`\`
+
+### 注册机制原理
+
+\`\`\`mermaid
+graph LR
+    A[+load方法] -->|BFRegister| B[注册表]
+    B -->|存储映射| C[Protocol -> ModuleClass]
+    D[setupAllModules] -->|读取注册表| B
+    D -->|创建实例| E[Module Instance]
+    D -->|调用setup| E
+
+    style A fill:#95e1d3
+    style B fill:#ffd93d
+    style C fill:#ffd93d
+    style D fill:#4ecdc4
+    style E fill:#6bcf7f
+\`\`\`
+
+**关键点：**
+1. \`+load\`方法在App启动时自动执行
+2. 注册时只记录协议和类的映射关系
+3. \`setupAllModules\`时才真正创建模块实例
+4. 按优先级顺序初始化模块
+
+---
+
+## 两种通信方式
+
+Bifrost提供两种模块间通信方式，适用于不同场景。
+
+### 方式对比
+
+\`\`\`mermaid
+graph TD
+    A[模块间通信] --> B[Router URL<br/>路由URL]
+    A --> C[Remote API<br/>远程API]
+
+    B --> B1[适用场景]
+    B1 --> B11[页面跳转]
+    B1 --> B12[简单参数传递]
+    B1 --> B13[跨平台URL]
+
+    C --> C1[适用场景]
+    C1 --> C11[复杂数据交互]
+    C1 --> C12[方法调用]
+    C1 --> C13[获取数据]
+
+    style B fill:#ffd93d
+    style C fill:#4ecdc4
+\`\`\`
+
+### Router URL（路由URL）
+
+**特点：**
+- 基于URL字符串
+- 适合页面跳转
+- 可以跨平台使用（H5、Android）
+
+**示例：**
+\`\`\`objective-c
+// 跳转到商品详情页
+NSString *url = @"//goods/detail?id=12345&from=home";
+UIViewController *vc = [Bifrost handleURL:url];
+[self.navigationController pushViewController:vc animated:YES];
+\`\`\`
+
+**工作流程：**
+\`\`\`mermaid
+sequenceDiagram
+    participant Caller as 调用方
+    participant Bifrost as Bifrost
+    participant Handler as URL Handler
+    participant VC as ViewController
+
+    Caller->>Bifrost: handleURL:@"//goods/detail?id=123"
+    Bifrost->>Bifrost: 解析URL和参数
+    Bifrost->>Handler: 调用绑定的Handler Block
+    Handler->>VC: 创建ViewController
+    VC->>Bifrost: 返回VC实例
+    Bifrost->>Caller: 返回VC
+    Caller->>Caller: push ViewController
+\`\`\`
+
+### Remote API（远程API）
+
+**特点：**
+- 基于协议和方法调用
+- 适合复杂数据交互
+- 类型安全
+
+**示例：**
+\`\`\`objective-c
+// 获取商品信息
+id<GoodsProtocol> goods = [BFModule(GoodsModuleService) goodsById:@"12345"];
+NSLog(@"商品名称：%@，价格：%.2f", goods.name, goods.price);
+
+// 获取商品列表
+NSArray<id<GoodsProtocol>>* list = [BFModule(GoodsModuleService) allGoodsList];
+\`\`\`
+
+**工作流程：**
+\`\`\`mermaid
+sequenceDiagram
+    participant Caller as 调用方
+    participant Bifrost as Bifrost
+    participant Module as 模块实例
+
+    Caller->>Bifrost: BFModule(GoodsModuleService)
+    Bifrost->>Bifrost: 查找注册的模块类
+    Bifrost->>Module: 获取单例实例
+    Module->>Bifrost: 返回实例
+    Bifrost->>Caller: 返回实例（转换为协议类型）
+    Caller->>Module: 调用协议方法
+    Module->>Caller: 返回结果
+\`\`\`
+
+### 如何选择？
+
+| 场景 | 推荐方式 | 原因 |
+|------|---------|------|
+| 页面跳转 | Router URL | 简单直观，支持跨平台 |
+| 获取数据 | Remote API | 类型安全，支持复杂对象 |
+| 传递图片等复杂对象 | Remote API | URL无法传递复杂对象 |
+| H5调用Native | Router URL | H5可以直接拼接URL |
+| 方法调用 | Remote API | 更符合OOP思想 |
+
+---
+
+## 小结
+
+本章我们学习了Bifrost的核心概念：
+
+1. **业务模块 vs 功能模块**
+   - 功能模块：通用库，直接import使用
+   - 业务模块：业务代码，通过Bifrost通信
+
+2. **代码依赖 vs 业务依赖**
+   - Bifrost消除代码依赖，保留业务依赖
+
+3. **三层架构**
+   - 业务模块层：实现业务逻辑
+   - Mediator层：定义通信协议
+   - 公共层：提供基础能力
+
+4. **模块协议**
+   - 必须实现\`sharedInstance\`和\`setup\`
+   - 可选实现\`priority\`和\`setupModuleSynchronously\`
+
+5. **注册机制**
+   - 在\`+load\`方法中注册
+   - 在\`AppDelegate\`中初始化
+
+6. **两种通信方式**
+   - Router URL：页面跳转
+   - Remote API：数据交互
+
+---
+
+## 下一步
+
+现在你已经掌握了Bifrost的核心概念。
+
+在下一章节中，我们将通过实际代码，快速上手Bifrost：
+- 安装Bifrost
+- 创建第一个模块
+- 实现模块间通信
+
+👉 [下一章：快速开始](03-快速开始.html)
+`;
+
+        // 渲染
+        const contentEl = document.getElementById('content');
+        contentEl.innerHTML = marked.parse(markdown);
+
+        // === 调试代码 ===
+        // 显示所有生成的ID
+        setTimeout(() => {
+            console.log('=== 生成的标题ID ===');
+            contentEl.querySelectorAll('h1[id], h2[id], h3[id], h4[id]').forEach(h => {
+                console.log(`${h.tagName} id="${h.id}" text="${h.textContent}"`);
+            });
+
+            console.log('\n=== 链接的锚点 ===');
+            contentEl.querySelectorAll('a[href^="#"]').forEach(a => {
+                const href = a.getAttribute('href');
+                const target = document.getElementById(href.substring(1));
+                console.log(`${href} -> ${target ? '✅找到' : '❌未找到'} (${a.textContent})`);
+            });
+        }, 200);
+
+        // 处理Mermaid图表
+        const mermaidBlocks = contentEl.querySelectorAll('pre code.language-mermaid');
+        mermaidBlocks.forEach((block, index) => {
+            const pre = block.parentElement;
+            const code = block.textContent;
+            const div = document.createElement('div');
+            div.className = 'mermaid';
+            div.textContent = code;
+            pre.replaceWith(div);
+        });
+
+        // 渲染Mermaid
+        mermaid.run();
+
+        // 修复锚点跳转 - 考虑固定头部的高度
+        function scrollToAnchor(target) {
+            const headerOffset = 80;
+            const elementPosition = target.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+        }
+
+        // 处理所有锚点链接点击
+        contentEl.addEventListener('click', function(e) {
+            const link = e.target.closest('a[href^="#"]');
+            if (link) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                // 关键修复：解码URL编码的锚点
+                const rawHash = link.getAttribute('href').substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const target = document.getElementById(hash);
+
+                console.log('🖱️ 点击链接:', link.textContent);
+                console.log('📍 原始锚点:', rawHash);
+                console.log('📍 解码后:', hash);
+                console.log('🎯 目标:', target);
+
+                if (target) {
+                    scrollToAnchor(target);
+                    history.pushState(null, null, '#' + hash);
+                } else {
+                    console.error('❌ 未找到ID:', hash);
+                }
+
+                return false;
+            }
+        }, true);
+
+        // 回到顶部
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            backToTop.classList.toggle('show', window.pageYOffset > 300);
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // 页面加载时处理URL中的锚点
+        if (window.location.hash) {
+            setTimeout(() => {
+                const rawHash = window.location.hash.substring(1);
+                const hash = decodeURIComponent(rawHash);
+                const element = document.getElementById(hash);
+                if (element) {
+                    scrollToAnchor(element);
+                }
+            }, 200);
+        }
+    </script>
+</body>
+</html>

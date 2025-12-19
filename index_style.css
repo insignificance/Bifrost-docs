@@ -1,0 +1,72 @@
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 3rem 1.5rem;
+}
+.container { max-width: 1200px; margin: 0 auto; }
+.hero { text-align: center; color: white; margin-bottom: 4rem; animation: fadeInDown 0.8s; }
+.hero h1 { font-size: 3.5rem; font-weight: 700; margin-bottom: 1rem; text-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+.hero .subtitle { font-size: 1.4rem; opacity: 0.95; margin-bottom: 2rem; font-weight: 300; }
+.hero .description { font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto 2rem; line-height: 1.6; }
+.features { display: flex; justify-content: center; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap; }
+.feature {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.95rem;
+}
+.doc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    animation: fadeInUp 0.8s 0.3s both;
+}
+.doc-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-decoration: none;
+    color: #24292e;
+    display: block;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+}
+.doc-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transform: scaleX(0);
+    transition: transform 0.3s;
+}
+.doc-card:hover { transform: translateY(-8px); box-shadow: 0 12px 24px rgba(0,0,0,0.15); }
+.doc-card:hover::before { transform: scaleX(1); }
+.card-icon { font-size: 3rem; margin-bottom: 1rem; }
+.doc-card h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.8rem; color: #667eea; }
+.doc-card p { color: #586069; line-height: 1.6; margin-bottom: 1.5rem; }
+.card-arrow { color: #667eea; font-size: 1.5rem; font-weight: bold; opacity: 0; transform: translateX(-10px); transition: all 0.3s; }
+.doc-card:hover .card-arrow { opacity: 1; transform: translateX(0); }
+.footer { text-align: center; color: white; margin-top: 4rem; padding: 2rem 0; border-top: 1px solid rgba(255,255,255,0.2); animation: fadeIn 1s 0.6s both; }
+.footer a { color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.5); }
+.footer a:hover { border-color: white; }
+
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-width: 768px) {
+    .hero h1 { font-size: 2.5rem; }
+    .hero .subtitle { font-size: 1.2rem; }
+    .doc-grid { grid-template-columns: 1fr; }
+    .features { flex-direction: column; align-items: center; }
+}
